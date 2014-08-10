@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin
+    xmlns="http://apache.org/cordova/ns/plugins/1.0"
+    id="nl.x-services.plugins.pagetransitions"
+    version="0.0.1">
+
+	<name>Page Transitions</name>
+
+	<description>
+    Slide out the current page to reveal the next one. By a native transitions.
+  </description>
+
+	<license>MIT</license>
+
+	<engines>
+		<engine name="cordova" version=">=3.0.0"/>
+	</engines>
+
+	<js-module src="www/PageTransitions.js" name="PageTransitions">
+		<clobbers target="window.plugins.pagetransitions"/>
+	</js-module>
+
+	<!-- ios -->
+	<platform name="ios">
+		<config-file target="config.xml" parent="/*">
+			<feature name="PageTransitions">
+				<param name="ios-package" value="PageTransitions"/>
+			</feature>
+		</config-file>
+		<header-file src="src/ios/PageTransitions.h"/>
+		<source-file src="src/ios/PageTransitions.m"/>
+	</platform>
+
+	<!-- android -->
+	<platform name="android">
+		<config-file target="res/xml/config.xml" parent="/*">
+			<feature name="PageTransitions">
+				<param name="android-package" value="nl.xservices.plugins.pagetransitions.PageTransitions"/>
+			</feature>
+		</config-file>
+		<source-file src="src/android/PageTransitions.java" target-dir="src/nl/xservices/plugins/pagetransitions"/>
+	</platform>
+</plugin>

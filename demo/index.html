@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="format-detection" content="telephone=no"/>
+  <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height"/>
+  <link rel="stylesheet" type="text/css" href="css/index.css"/>
+  <meta name="msapplication-tap-highlight" content="no"/>
+  <title>Hello World</title>
+  <style>
+    button {
+      font-size: 1.8em;
+    }
+  </style>
+</head>
+<body style="background:#aaa">
+<div class="app">
+  <h1 id="title">First page</h1>
+  <div id="deviceready" class="blink">
+    <p class="event listening">Connecting to Device</p>
+    <p class="event received">Device is Ready</p><br/>
+
+    <button onclick="slide('up', 'lightblue')">up</button><br/><br/>
+    <button onclick="slide('left', 'red', 'standalone.html')">left (file)</button>&nbsp;&nbsp;&nbsp;&nbsp;
+    <button onclick="slide('right', 'orange')">right</button><br/><br/>
+    <button onclick="slide('down', 'green')">down</button><br/><br/><br/><br/>
+
+
+    <button onclick="loadJqmDemo()">JQM demo</button><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+
+
+                                                                                  <!--<button onclick="slide(null, 'blue')">default direction</button>-->
+
+  </div>
+</div>
+<script type="text/javascript" src="cordova.js"></script>
+<script type="text/javascript" src="js/index.js"></script>
+<script type="text/javascript">
+  app.initialize();
+
+  // demo for hooking the Android backbutton to the slide 'right'
+  document.addEventListener('backbutton', function() {
+    slide('right', 'purple');
+  }, false);
+
+  function slide(direction, color, file) {
+    if (!file) {
+      setTimeout(function () {
+        // update the page inside this timeout
+        document.querySelector("#title").innerHTML = direction;
+        document.querySelector("body").style.background = color;
+      }, 20);
+    }
+    // not passing in options makes the plugin fall back to the defaults defined in the JS API
+    window.plugins.pagetransitions.slide({
+          'direction': direction,
+          'duration': 700,
+          'file': file
+        },
+        function () {
+          console.log('------------------- slide transition finished');
+        },
+        function (msg) {
+          alert('error: ' + msg);
+        });
+  }
+
+  function loadJqmDemo() {
+    document.location = 'jqmdemo.html';
+  }
+
+</script>
+</body>
+</html>

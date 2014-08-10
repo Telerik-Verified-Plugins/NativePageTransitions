@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Page Transitions - JQM demo</title>
+  <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.3/jquery.mobile-1.4.3.min.css" />
+  <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+  <script>
+    window.window.onerror = function(msg, file, line) {
+      alert(msg + '; ' + file + '; ' + line);
+    };
+    // override some jqm defaults, need to be done before jqm is loaded
+    $(document).bind("mobileinit", function(){
+      $.mobile.defaultPageTransition = "none"; // default = slide, but we use our native one :)
+    });
+  </script>
+  <script src="http://code.jquery.com/mobile/1.4.3/jquery.mobile-1.4.3.min.js"></script>
+  <script type="text/javascript" src="cordova.js"></script>
+  <script>
+    function slide(direction) {
+      // wrap this in a sort timeout if you want to show the button highlight effect when it's pressed.
+      // caveat: making the timeout too long makes the page change before the transition kicks in..
+      setTimeout(function() {
+        window.plugins.pagetransitions.slide({
+              'direction': direction,
+              'duration': 500
+            },
+            function () {
+              console.log('slide transition finished');
+            });
+        }, 50)
+    }
+  </script>
+</head>
+<body>
+
+<div data-role="page" id="first">
+  <div data-role="header">
+    <h1>First page</h1>
+  </div>
+  <div data-role="content">
+    <ul data-role="listview" data-inset="true">
+      <li><a href="#second" data-transition="slide">JQM slide</a></li>
+      <li><a href="#second" onclick="slide('left')">Native slide</a></li>
+      <li>This is the first page</li>
+      <li>This is the first page</li>
+      <li>This is the first page</li>
+      <li>This is the first page</li>
+      <li>This is the first page</li>
+      <li>This is the first page</li>
+      <li>This is the first page</li>
+      <li>This is the first page</li>
+    </ul>
+  </div>
+  <div data-role="footer" data-theme="c">
+    <img src="http://northerngate.ca/wp-content/uploads/2011/09/northerngate-beans-slider.jpg" width="320" height="100"/>
+    <!--<h4>created by Eddy Verbruggen</h4>-->
+  </div>
+</div>
+
+<div data-role="page" id="second">
+  <div data-role="header" data-theme="b">
+    <h1>Second page</h1>
+  </div>
+  <div data-role="content">
+    <ul data-role="listview" data-inset="true">
+      <li data-icon="carat-l"><a href="#first" data-transition="slide" data-direction="reverse">JQM slide</a></li>
+      <li data-icon="carat-l"><a href="#first" onclick="slide('right')">Native slide</a></li>
+      <li>This is the second page</li>
+      <li>This is the second page</li>
+      <li>This is the second page</li>
+      <li>This is the second page</li>
+      <li>This is the second page</li>
+    </ul>
+  </div>
+  <div data-role="footer" data-theme="c">
+    <img src="http://northerngate.ca/wp-content/uploads/2011/09/northerngate-beans-slider.jpg" width="320" height="100"/>
+    <h4>created by Eddy Verbruggen</h4>
+  </div>
+</div>
+
+</body>
+</html>
