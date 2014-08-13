@@ -4,7 +4,11 @@ function PageTransitions() {
 PageTransitions.prototype.slide = function (options, onSuccess, onError) {
   var opts = options || {};
   opts.direction = opts.direction || "left";
-  opts.duration  = opts.duration  || 700;
+  opts.duration = opts.duration || 700;
+  opts.androiddelay = opts.androiddelay || 10;
+  // setting slowdownfactor > 1 makes the next page slide less pixels.
+  // Try 3 for a nice effect, especially on iOS.
+  opts.slowdownfactor  = opts.slowdownfactor || 1;
   cordova.exec(onSuccess, onError, "PageTransitions", "slide", [opts]);
 };
 

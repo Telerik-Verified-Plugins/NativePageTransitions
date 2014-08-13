@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Kendo UI Demo</title>
+  <script type="text/javascript" src="cordova.js"></script>
+  <script>
+    // this piece of code is an automatic kendoui-cordova-pagetransitions wiring thingy
+    // .. move to a new js file when done, so users can drop it in
+
+    // check that the plugin is loaded (after deviceready ofcourse)
+    document.addEventListener("deviceready", wireKendoToCordovaPageTransitions, false);
+
+    function wireKendoToCordovaPageTransitions() {
+      if (window.plugins && window.plugins.pagetransitions) {
+        var transAnchors = document.querySelectorAll("a[data-transition]");
+        for (var i=0; i<transAnchors.length; i++) {
+          var transAnchor = transAnchors[i];
+          if (transAnchor.getAttribute("data-transition-native") !== "false") {
+            var slideDirection = transAnchor.getAttribute("data-transition");
+            if (slideDirection != null && slideDirection.indexOf("slide:") > -1) {
+              slideDirection = slideDirection.substring(6);
+              var href = transAnchor.getAttribute("href");
+              transAnchor.removeAttribute("href"); // note this removes the link style.. is that ok? for buttons it likely is
+              transAnchor.removeAttribute("data-transition");
+              var androiddelay = transAnchor.getAttribute("data-transition-native-androiddelay");
+              if (androiddelay == null) {
+                androiddelay = 100;
+              }
+              transAnchor.setAttribute("ontouchend", "slide('"+slideDirection+"', '"+href+"', '"+androiddelay+"')");
+            }
+          }
+        }
+      } else {
+        console.log("window.plugins.pagetransitions not available, is it installed correctly?")
+      }
+    }
+  </script>
+
+
+  <link href="http://cdn.kendostatic.com/2014.2.716/styles/kendo.common.min.css" rel="stylesheet" />
+  <link href="http://cdn.kendostatic.com/2014.2.716/styles/kendo.default.min.css" rel="stylesheet" />
+  <link href="http://cdn.kendostatic.com/2014.2.716/styles/kendo.mobile.all.min.css" rel="stylesheet" />
+  <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+  <script src="http://cdn.kendostatic.com/2014.2.716/js/kendo.all.min.js"></script>
+
+
+  <script>
+    function slide(direction, href, delay) {
+
+//      setTimeout(function() {
+        document.location.href = href;
+//      }, 0);
+
+      window.plugins.pagetransitions.slide({
+            'direction': direction,
+            'duration': 350,
+            'androiddelay': delay
+//            'href': href // can be a #hash or a .html file
+          },
+          function () {
+//            console.log('slide transition finished');
+          });
+    }
+  </script>
+
+</head>
+<body>
+<div data-role="view" data-title="Camera App" id="view-transitions" data-persist="true">
+  <a data-role="button" href="index.html" data-rel="external">Back</a>
+  <br/>
+  <img src="http://demos.telerik.com/kendo-ui/content/mobile/shared/color-lens.png" class="camera-image" /><br />
+  <br/>
+  <br/>
+  <a href="#view-transitions-welcome" data-role="button" class="transitions-button" data-transition="slide:left" data-transition-native="false">Forward (css)</a>
+  <br/>
+  <br/>
+  <!--<a href="#view-transitions-welcome" data-role="button" class="transitions-button" data-transition="slide:left">Native transition</a>-->
+  <a href="#view-transitions-welcome" data-role="button" class="transitions-button" data-transition="slide:left" data-transition-native-androiddelay="220">Forward (native)</a>
+</div>
+
+<div data-role="view" data-title="Welcome" id="view-transitions-welcome" data-persist="true">
+  <br/>
+  <br/>
+  <a data-transition-native="false" data-role="button" href="#view-transitions" data-transition="slide:right" class="transitions-button">Back (css)</a>
+  <br/>
+  <a data-transition-native="false" data-role="button" href="#view-transitions-welcome-next" data-transition="slide:left" class="transitions-button">Forward (css)</a>
+  <br/>
+  <br/>
+  <br/>
+  <a data-role="button" href="#view-transitions" data-transition="slide:right" class="transitions-button">Back (native)</a>
+  <br/>
+  <a data-role="button" href="#view-transitions-welcome-next" data-transition="slide:left" class="transitions-button">Forward (native)</a>
+  <br/>
+  <br/>
+  <br/>
+  <br/>
+  <p>Just some Kendo widgets..</p>
+  <br/>
+
+  <ul data-role="buttongroup" data-enable="true">
+    <li>Option 1</li>
+    <li>Option 2</li>
+    <li>Option 3</li>
+  </ul>
+
+  <br/>
+
+  <ul data-role="listview">
+    <li>Item 1<a data-role="detailbutton" data-style="rowinsert" data-click="onClick"></a></li>
+    <li>Item 2<a data-role="detailbutton" data-style="rowinsert" data-click="onClick"></a></li>
+    <li>Item 3<a data-role="detailbutton" data-style="rowinsert" data-click="onClick"></a></li>
+  </ul>
+
+</div>
+
+<div data-role="view" data-title="Welcome" id="view-transitions-welcome-next" data-persist="true">
+  <br/>
+  <br/>
+  <p>And another page</p>
+  <br/>
+  <a data-transition-native="false" data-role="button" href="#view-transitions-welcome" data-transition="slide:right" class="transitions-button">Back (css)</a>
+  <br/>
+  <br/>
+  <a data-role="button" href="#view-transitions-welcome" data-transition="slide:right" class="transitions-button">Back (native)</a>
+  <br/>
+  <br/>
+</div>
+
+
+<style scoped>
+  .km-root .transitions-button,
+  .km-root .transitions-cancel {
+    display: block;
+    text-align: center;
+    margin: .6em .8em 0;
+    font-size: 1.2em;
+    background-color: #369;
+  }
+
+  .km-ios7 .transitions-button,
+  .km-ios7 .transitions-cancel {
+    color: #fff;
+    border-color: transparent;
+  }
+
+  .km-blackberry .transitions-button,
+  .km-blackberry .transitions-cancel {
+    margin: .6em 1.8em 0;
+  }
+
+  #view-transitions,
+  #view-transitions-welcome p {
+    color: #fff;
+    text-align: center;
+  }
+
+  #view-transitions img,
+  #view-transitions-welcome img {
+    display: block;
+    margin: 30px auto;
+  }
+
+  #view-transitions-login label {
+    display: inline-block;
+    width: 100%;
+  }
+  #view-transitions .km-content,
+  #view-transitions-login .km-content,
+  #view-transitions-welcome .km-content {
+    background: url(http://demos.telerik.com/kendo-ui/content/shared/images/patterns/pattern1.png) repeat 0 0;
+  }
+
+  #view-transitions-welcome-next .km-content {
+    background: url(http://demos.telerik.com/kendo-ui/content/shared/images/patterns/pattern8.png) repeat 0 0;
+  }
+
+  .km-ios #view-transitions-welcome .km-button,
+  .km-ios7 #view-transitions-welcome .km-content .km-button,
+  .km-blackberry #view-transitions-welcome .km-content .km-button,
+  .km-flat #view-transitions-welcome .km-content .km-button {
+    background-color: DarkRed;
+    color: #fff;
+  }
+
+  .km-ios #view-transitions-login .transitions-button,
+  .km-ios7 #view-transitions-login .transitions-button,
+  .km-blackberry #view-transitions-login .km-content .transitions-button,
+  .km-flat #view-transitions-login .km-content .transitions-button {
+    background-color: Green;
+    color: #fff;
+  }
+
+  .km-blackberry #view-transitions *,
+  .km-blackberry #view-transitions-login *,
+  .km-blackberry #view-transitions-welcome *
+  {
+    color: #fff;
+  }
+
+  .km-ios #view-transitions .km-button,
+  .km-ios7 #view-transitions .km-button,
+  .km-ios #view-transitions-login .transitions-cancel,
+  .km-ios7 #view-transitions-login .transitions-cancel {
+    background-color: #000;
+  }
+
+  .km-flat #view-transitions .km-button,
+  .km-flat #view-transitions-login .km-content .transitions-cancel {
+    background-color: #000;
+    color: #fff;
+  }
+
+  .km-ios #view-transitions .km-navbar,
+  .km-ios #view-transitions-login .km-navbar,
+  .km-ios #view-transitions-welcome .km-navbar,
+  .km-ios7 #view-transitions .km-navbar,
+  .km-ios7 #view-transitions-login .km-navbar,
+  .km-ios7 #view-transitions-welcome .km-navbar,
+  .km-ios7 .km-view-title,
+  .km-blackberry #view-transitions .km-navbar,
+  .km-blackberry #view-transitions-login .km-navbar,
+  .km-blackberry #view-transitions-welcome .km-navbar,
+  .km-flat #view-transitions .km-navbar,
+  .km-flat #view-transitions-login .km-navbar,
+  .km-flat #view-transitions-welcome .km-navbar {
+    background-color: #000;
+    color: #fff;
+  }
+
+  .km-ios7 #view-transitions .km-navbar,
+  .km-ios7 #view-transitions-login .km-navbar,
+  .km-ios7 #view-transitions-welcome .km-navbar {
+    border-color: transparent;
+  }
+
+  .km-ios7 #view-transitions-login  .km-list > li,
+  .km-ios7 #view-transitions-login  .km-list > li input,
+  .km-android-light #view-transitions-login  .km-list > li,
+  .km-wp-light #view-transitions-login  .km-list > li {
+    color: #fff;
+  }
+  .km-wp-light #view-transitions .km-view-title {
+    color: #000;
+  }
+
+  .transitions-button {
+    width: 60%;
+    margin-left: 16% !important;
+  }
+</style>
+
+
+<script>
+  var app = new kendo.mobile.Application(document.body);
+  function viewShow() {
+    myListView = $("#listView").refresh();
+  }
+</script>
+</body>
+</html>

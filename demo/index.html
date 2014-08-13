@@ -9,11 +9,11 @@
   <title>Hello World</title>
   <style>
     button {
-      font-size: 1.8em;
+      font-size: 1.6em;
     }
   </style>
 </head>
-<body style="background:#aaa">
+<body>
 <div class="app">
   <h1 id="title">First page</h1>
   <div id="deviceready" class="blink">
@@ -21,15 +21,21 @@
     <p class="event received">Device is Ready</p><br/>
 
     <button onclick="slide('up', 'lightblue')">up</button><br/><br/>
-    <button onclick="slide('left', 'red', 'standalone.html')">left (file)</button>&nbsp;&nbsp;&nbsp;&nbsp;
-    <button onclick="slide('right', 'orange')">right</button><br/><br/>
+    <!--button onclick="slide('left', 'red', 'standalone.html')">left (file)</button>&nbsp;&nbsp;&nbsp;&nbsp;-->
+    <button onclick="slide('left', 'red', 1, 'index.html?x=y')">left, file</button>&nbsp;&nbsp;&nbsp;&nbsp;
+    <button onclick="slide('right', 'orange', 3)">right *</button><br/><br/>
     <button onclick="slide('down', 'green')">down</button><br/><br/><br/><br/>
 
 
-    <button onclick="loadJqmDemo()">JQM demo</button><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+    HTML5 fwk demo's:<br/>
+    <button onclick="document.location = 'kendouidemo.html'">KendoUI</button>&nbsp;&nbsp;&nbsp;&nbsp;
+    <button onclick="document.location = 'jqmdemo.html'">JQM</button>
+    <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+    <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
 
+    * partial slide of the webview
 
-                                                                                  <!--<button onclick="slide(null, 'blue')">default direction</button>-->
+    <!--<button onclick="slide(null, 'blue')">default direction</button>-->
 
   </div>
 </div>
@@ -43,19 +49,20 @@
     slide('right', 'purple');
   }, false);
 
-  function slide(direction, color, file) {
-    if (!file) {
+  function slide(direction, color, slowdownfactor, href) {
+    if (!href) {
       setTimeout(function () {
         // update the page inside this timeout
         document.querySelector("#title").innerHTML = direction;
-        document.querySelector("body").style.background = color;
+        document.querySelector("html").style.background = color;
       }, 20);
     }
     // not passing in options makes the plugin fall back to the defaults defined in the JS API
     window.plugins.pagetransitions.slide({
           'direction': direction,
-          'duration': 700,
-          'file': file
+          'duration': 500,
+          'slowdownfactor' : slowdownfactor,
+          'href': href
         },
         function () {
           console.log('------------------- slide transition finished');

@@ -1,12 +1,13 @@
 package nl.xservices.plugins.pagetransitions;
 
 import android.graphics.Bitmap;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
+import android.webkit.WebView;
 import android.widget.ImageView;
-import org.apache.cordova.CallbackContext;
-import org.apache.cordova.CordovaPlugin;
-import org.apache.cordova.PluginResult;
+import org.apache.cordova.*;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -17,171 +18,178 @@ import java.util.TimerTask;
 
 public class PageTransitions extends CordovaPlugin {
 
+  ImageView imageView;
+  long duration;
+  long androiddelay;
+  String direction;
+  int slowdownfactor;
+
+  CallbackContext _callbackContext;
+
+  boolean calledFromJS;
+
+  class MyCordovaWebViewClient extends CordovaWebViewClient {
+    public MyCordovaWebViewClient(CordovaInterface cordova, CordovaWebView view) {
+      super(cordova, view);
+    }
+
+    @Override
+    public void onPageFinished(WebView view, String url) {
+      super.onPageFinished(view, url);
+      doTransition();
+    }
+  }
+
+  @Override
+  public void initialize(CordovaInterface cordova, CordovaWebView webView) {
+    super.initialize(cordova, webView);
+    webView.setWebViewClient(new MyCordovaWebViewClient(cordova, webView));
+  }
+
   @Override
   public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
 
+    // TODO move effects to seperate files
     if ("slide".equalsIgnoreCase(action)) {
 
       final JSONObject json = args.getJSONObject(0);
-      final long duration = json.getLong("duration");
-      final String direction = json.getString("direction");
-      final String file = json.isNull("file") ? null : json.getString("file");
+      duration = json.getLong("duration");
+      androiddelay = json.getLong("androiddelay");
+      direction = json.getString("direction");
+      slowdownfactor = json.getInt("slowdownfactor");
+      final String href = json.isNull("href") ? null : json.getString("href");
+      _callbackContext = callbackContext;
+      calledFromJS = true;
 
-      // check whether or not the file exists.. could be more elegant btw
-      if (file != null) {
-        try {
-          webView.getContext().getAssets().open("www/" + file);
-        } catch (IOException ignore) {
-          callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "file not found: " + file));
+      // check whether or not the file exists
+      if (href != null) {
+        if (href.contains(".html")) {
+          String localFile = href;
+          if (!href.endsWith(".html")) {
+            localFile = href.substring(0, href.indexOf(".html") + 5);
+          }
+          try {
+            webView.getContext().getAssets().open("www/" + localFile);
+          } catch (IOException ignore) {
+            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "href .html file not found: " + href));
+            return false;
+          }
+        } else if (!href.startsWith("#")) {
+          callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "href must be null, a .html file or a #navigationhash: " + href));
           return false;
         }
       }
 
-      super.cordova.getActivity().runOnUiThread(new Runnable() {
+      cordova.getActivity().runOnUiThread(new Runnable() {
         @Override
         public void run() {
           webView.setDrawingCacheEnabled(true);
           Bitmap bitmap = Bitmap.createBitmap(webView.getDrawingCache());
           webView.setDrawingCacheEnabled(false);
 
-          final ImageView imageView = new ImageView(webView.getContext());
+          imageView = new ImageView(webView.getContext());
           imageView.setImageBitmap(bitmap);
-          webView.addView(imageView);
+          cordova.getActivity().addContentView(imageView, webView.getLayoutParams());
 
-          if (file != null) {
-            webView.loadUrlIntoView("file:///android_asset/www/" + file, false);
-          }
-
-          // wrapping the transition into timer so we can set a delay;
-          // the more processing needs to be done to load the next view,
-          // the larger the delay needs to be to get a smooth transition
-          final long delay = file == null ? 30 : 300;
-
-          new Timer().schedule(new TimerTask() {
-            public void run() {
-              try {
-                float transitionToX = 0;
-                float transitionFromY = 0;
-                float transitionToY = 0;
-
-                if ("left".equals(direction)) {
-                  transitionToX = -1;
-                  transitionFromY = webView.getScrollY();
-                  transitionToY = webView.getScrollY();
-                } else if ("right".equals(direction)) {
-                  transitionToX = 1;
-                  transitionFromY = webView.getScrollY();
-                  transitionToY = webView.getScrollY();
-                } else if ("up".equals(direction)) {
-                  transitionFromY = webView.getScrollY();
-                  transitionToY = -webView.getHeight();
-                } else if ("down".equals(direction)) {
-                  transitionFromY = webView.getScrollY();
-                  transitionToY = webView.getHeight();
-                }
-
-                final TranslateAnimation trans = new TranslateAnimation(
-                    TranslateAnimation.RELATIVE_TO_PARENT, 0f,
-                    TranslateAnimation.RELATIVE_TO_PARENT, transitionToX,
-                    TranslateAnimation.ABSOLUTE, transitionFromY,
-                    TranslateAnimation.ABSOLUTE, transitionToY);
-
-                trans.setDuration(duration);
-
-                trans.setAnimationListener(new Animation.AnimationListener() {
-                  @Override
-                  public void onAnimationStart(Animation animation) {
-                  }
-
-                  @Override
-                  public void onAnimationEnd(Animation animation) {
-                    webView.removeView(imageView);
-                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
-                  }
-
-                  @Override
-                  public void onAnimationRepeat(Animation animation) {
-                  }
-                });
-                imageView.startAnimation(trans);
-
-
-              } catch (Exception e) {
-                e.printStackTrace();
+          if (href != null) {
+            if (href.contains(".html")) {
+              webView.loadUrlIntoView("file:///android_asset/www/" + href, false);
+            } else {
+              // it's a #hash
+              String url = webView.getUrl();
+              // strip any existing hash
+              if (url.contains("#")) {
+                url = url.substring(0, url.indexOf("#"));
               }
+              webView.loadUrlIntoView(url + href, false);
             }
-          }, delay);
+          } else {
+            doTransition();
+          }
         }
       });
-
-      /*
-    } else if ("fade".equalsIgnoreCase(action)) {
-      cordova.getActivity().runOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-          final TranslateAnimation trans = new TranslateAnimation(
-              TranslateAnimation.RELATIVE_TO_PARENT, 0f,
-              TranslateAnimation.RELATIVE_TO_PARENT, 1f,
-              TranslateAnimation.RELATIVE_TO_PARENT, 0f,
-              TranslateAnimation.RELATIVE_TO_PARENT, 0f);
-          trans.setDuration(400);
-
-          final TranslateAnimation trans2 = new TranslateAnimation(
-              TranslateAnimation.RELATIVE_TO_PARENT, -1f,
-              TranslateAnimation.RELATIVE_TO_PARENT, 0f,
-              TranslateAnimation.RELATIVE_TO_PARENT, 0f,
-              TranslateAnimation.RELATIVE_TO_PARENT, 0f);
-
-          trans2.setDuration(400);
-
-          try {
-            AlphaAnimation animation1 = new AlphaAnimation(1f, 0.6f);
-            animation1.setDuration(300);
-            animation1.setStartOffset(0);
-
-            animation1.setAnimationListener(new Animation.AnimationListener() {
-
-              @Override
-              public void onAnimationEnd(Animation arg0) {
-                AlphaAnimation animation2 = new AlphaAnimation(0.6f, 1f);
-                animation2.setDuration(300);
-                animation2.setStartOffset(0);
-                webView.startAnimation(animation2);
-              }
-
-              @Override
-              public void onAnimationRepeat(Animation arg0) {
-              }
-
-              @Override
-              public void onAnimationStart(Animation arg0) {
-              }
-            });
-
-            webView.startAnimation(animation1);
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
-
-
-          new Timer().schedule(new TimerTask() {
-            public void run() {
-              try {
-                //              secondWebView.startAnimation(trans2);
-              } catch (Exception e) {
-                e.printStackTrace();
-              }
-            }
-          }, 400);
-
-
-        }
-      });
-
-      //         mWebView.loadUrl("file:///android_asset/" + filename);
-
-    */
     }
     return true;
+  }
+
+  private void doTransition() {
+    if (!calledFromJS) {
+      System.err.println("---------------not calledFromJS !!!");
+      return;
+    }
+
+    new Timer().schedule(new TimerTask() {
+      public void run() {
+        try {
+
+          // manipulations of the imageView need to be done by the same thread
+          // as the one that created it - the uithread in this case
+          cordova.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+              float transitionToX = 0;
+              float transitionToY = 0;
+              int translateAnimationY = TranslateAnimation.RELATIVE_TO_PARENT;
+
+              if ("left".equals(direction)) {
+                transitionToX = -1;
+              } else if ("right".equals(direction)) {
+                transitionToX = 1;
+              } else if ("up".equals(direction)) {
+                transitionToY = -webView.getHeight();
+                translateAnimationY = TranslateAnimation.ABSOLUTE;
+              } else if ("down".equals(direction)) {
+                transitionToY = webView.getHeight();
+                translateAnimationY = TranslateAnimation.ABSOLUTE;
+              }
+
+              final TranslateAnimation imageViewAnimation = new TranslateAnimation(
+                  TranslateAnimation.RELATIVE_TO_PARENT, 0f,
+                  TranslateAnimation.RELATIVE_TO_PARENT, transitionToX,
+                  translateAnimationY, 0,
+                  translateAnimationY, transitionToY);
+              imageViewAnimation.setDuration(duration);
+
+              final TranslateAnimation webViewAnimation = new TranslateAnimation(
+                  TranslateAnimation.RELATIVE_TO_PARENT, -transitionToX / slowdownfactor,
+                  TranslateAnimation.RELATIVE_TO_PARENT, 0,
+                  TranslateAnimation.ABSOLUTE, -transitionToY / slowdownfactor,
+                  TranslateAnimation.ABSOLUTE, 0);
+              webViewAnimation.setDuration(duration);
+
+              imageViewAnimation.setAnimationListener(new Animation.AnimationListener() {
+                @Override
+                public void onAnimationStart(Animation animation) {
+                }
+
+                @Override
+                public void onAnimationEnd(Animation animation) {
+                  ViewGroup parent = (ViewGroup) imageView.getParent();
+                  if (parent == null) {
+                    System.err.println("-------------- have to set an imageview to invisible");
+                    imageView.setVisibility(View.GONE);
+                  } else {
+                    parent.removeView(imageView);
+                  }
+                  _callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
+                }
+
+                @Override
+                public void onAnimationRepeat(Animation animation) {
+                }
+              });
+
+              imageView.startAnimation(imageViewAnimation);
+              webView.startAnimation(webViewAnimation);
+              calledFromJS = false;
+            }
+          });
+
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+    }, androiddelay);
   }
 }
