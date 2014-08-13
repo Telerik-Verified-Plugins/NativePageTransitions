@@ -19,15 +19,21 @@
   
   CGFloat transitionToX = 0;
   CGFloat transitionToY = 0;
+  int screenshotSlowdownFactor = 1;
+  int webviewSlowdownFactor = 1;
   
   if ([direction isEqualToString:@"left"]) {
     transitionToX = -width;
+    screenshotSlowdownFactor = [slowdownfactor intValue];
   } else if ([direction isEqualToString:@"right"]) {
     transitionToX = width;
+    webviewSlowdownFactor = [slowdownfactor intValue];
   } else if ([direction isEqualToString:@"up"]) {
     transitionToY = -height;
+    screenshotSlowdownFactor = [slowdownfactor intValue];
   } else if ([direction isEqualToString:@"down"]) {
     transitionToY = height;
+    webviewSlowdownFactor = [slowdownfactor intValue];
   }
   
   CGSize viewSize = self.viewController.view.bounds.size;
@@ -42,42 +48,58 @@
   
   _screenShotImageView = [[UIImageView alloc]initWithFrame:[self.viewController.view.window frame]];
   [_screenShotImageView setImage:image];
-  [UIApplication.sharedApplication.keyWindow.subviews.lastObject addSubview:_screenShotImageView];
+  if ([direction isEqualToString:@"left"] || [direction isEqualToString:@"up"]) {
+    [UIApplication.sharedApplication.keyWindow.subviews.lastObject insertSubview:_screenShotImageView belowSubview:self.webView];
+  } else {
+    [UIApplication.sharedApplication.keyWindow.subviews.lastObject insertSubview:_screenShotImageView aboveSubview:self.webView];
+  }
 
-  // TODO deal with #hashes like Android does, may work though.. needs testing
   if (href != nil) {
-    // strip any params when looking for the file on the filesystem
-    NSString *bareFileName = href;
-    NSString *urlParams = nil;
+    if ([href rangeOfString:@".html"].location != NSNotFound) {
+      // strip any params when looking for the file on the filesystem
+      NSString *bareFileName = href;
+      NSString *urlParams = nil;
+
+      if (![bareFileName hasSuffix:@".html"]) {
+        NSRange range = [href rangeOfString:@".html"];
+        bareFileName = [href substringToIndex:range.location+5];
+        urlParams = [href substringFromIndex:range.location+5];
+      }
+      NSString *filePath = [self.commandDelegate pathForResource:bareFileName];
+      if (filePath == nil) {
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"file not found"];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        return;
+      }
     
-    if (![bareFileName hasSuffix:@".html"]) {
-      NSRange range = [href rangeOfString:@".html"];
-      bareFileName = [href substringToIndex:range.location+5];
-      urlParams = [href substringFromIndex:range.location+5];
-    }
-    NSString *filePath = [self.commandDelegate pathForResource:bareFileName];
-    if (filePath == nil) {
-      CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"file not found"];
+      NSURL *url = [NSURL fileURLWithPath: filePath];
+      // re-attach the params when loading the url
+      if (urlParams != nil) {
+        NSString *absoluteURLString = [url absoluteString];
+        NSString *absoluteURLWithParams = [absoluteURLString stringByAppendingString: urlParams];
+        url = [NSURL URLWithString:absoluteURLWithParams];
+      }
+    
+      [self.webView loadRequest: [NSURLRequest requestWithURL:url]];
+    } else if (![href hasPrefix:@"#"]) {
+      CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"href must be null, a .html file or a #navigationhash"];
       [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
       return;
+    } else {
+      // it's a hash, so load the url without any possible current hash
+      NSString *url = self.webView.request.URL.absoluteString;
+      // attach the hash
+      url = [url stringByAppendingString:href];
+      // and load it
+      [self.webView loadRequest: [NSURLRequest requestWithURL:[NSURL URLWithString:url]]];
     }
-    
-    NSURL *url = [NSURL fileURLWithPath: filePath];
-    // re-attach the params when loading the url
-    if (urlParams != nil) {
-      NSString *absoluteURLString = [url absoluteString];
-      NSString *absoluteURLWithParams = [absoluteURLString stringByAppendingString: urlParams];
-      url = [NSURL URLWithString:absoluteURLWithParams];
-    }
-    
-    [self.webView loadRequest: [NSURLRequest requestWithURL:url]];
   }
   
   [UIView animateWithDuration:duration
                         delay:delay
                       options:UIViewAnimationOptionCurveEaseInOut // TODO: allow passing in?
                    animations:^{
-                     [_screenShotImageView setFrame:CGRectMake(transitionToX, transitionToY, width, height)];
+                     [_screenShotImageView setFrame:CGRectMake(transitionToX/screenshotSlowdownFactor, transitionToY/screenshotSlowdownFactor, width, height)];
                    }
                    completion:^(BOOL finished) {
                      [_screenShotImageView removeFromSuperview];
@@ -87,11 +109,11 @@
   
   
   // included the code below for the 'push' animation, divide transitionX and Y for a more subtle effect
-  [self.webView setFrame:CGRectMake(-transitionToX/[slowdownfactor intValue], -transitionToY/[slowdownfactor intValue], width, height)];
+  [self.webView setFrame:CGRectMake(-transitionToX/webviewSlowdownFactor, -transitionToY/webviewSlowdownFactor, width, height)];
   
   [UIView animateWithDuration:duration
                         delay:delay
-                      options:UIViewAnimationOptionCurveEaseInOut // property?
+                      options:UIViewAnimationOptionCurveEaseInOut
                    animations:^{
                      [self.webView setFrame:CGRectMake(0, 0, width, height)];
                    }
