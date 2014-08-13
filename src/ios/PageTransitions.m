@@ -44,7 +44,7 @@
   [_screenShotImageView setImage:image];
   [UIApplication.sharedApplication.keyWindow.subviews.lastObject addSubview:_screenShotImageView];
 
-  // TODO hdeal with #hashes like Android does, may work though.. needs testing
+  // TODO deal with #hashes like Android does, may work though.. needs testing
   if (href != nil) {
     // strip any params when looking for the file on the filesystem
     NSString *bareFileName = href;

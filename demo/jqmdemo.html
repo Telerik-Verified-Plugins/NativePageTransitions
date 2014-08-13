@@ -19,17 +19,13 @@
   <script type="text/javascript" src="cordova.js"></script>
   <script>
     function slide(direction) {
-      // wrap this in a sort timeout if you want to show the button highlight effect when it's pressed.
-      // caveat: making the timeout too long makes the page change before the transition kicks in..
-      setTimeout(function() {
-        window.plugins.pagetransitions.slide({
-              'direction': direction,
-              'duration': 500
-            },
-            function () {
-              console.log('slide transition finished');
-            });
-        }, 50)
+      window.plugins.pagetransitions.slide({
+            'direction': direction,
+            'duration': 500
+          },
+          function () {
+            console.log('slide transition finished');
+          });
     }
   </script>
 </head>
