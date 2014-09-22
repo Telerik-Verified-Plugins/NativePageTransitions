@@ -201,7 +201,7 @@ public class NativePageTransitions extends CordovaPlugin {
               flipDirection = AnimationFactory.FlipDirection.LEFT_RIGHT;
             }
 
-            final Animation[] animations = AnimationFactory.flipAnimation(imageView, webView, flipDirection, 500, null);
+            final Animation[] animations = AnimationFactory.flipAnimation(imageView, webView, flipDirection, duration, null);
 
             animations[0].setAnimationListener(new Animation.AnimationListener() {
               @Override
