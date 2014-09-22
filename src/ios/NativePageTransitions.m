@@ -2,43 +2,6 @@
 
 @implementation NativePageTransitions
 
-- (void) flip:(CDVInvokedUrlCommand*)command {
-  _command = command;
-  NSMutableDictionary *args = [command.arguments objectAtIndex:0];
-  NSString *direction = [args objectForKey:@"direction"];
-  NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
-  NSString *href = [args objectForKey:@"href"];
-
-  // duration/delay is passed in ms, but needs to be in sec here
-  duration = duration / 1000;
-
-  UIViewAnimationOptions animationOptions;
-  if ([direction isEqualToString:@"left"]) {
-    animationOptions = UIViewAnimationOptionTransitionFlipFromLeft;
-  } else if ([direction isEqualToString:@"right"]) {
-    animationOptions = UIViewAnimationOptionTransitionFlipFromRight;
-  } else if ([direction isEqualToString:@"up"]) {
-    animationOptions = UIViewAnimationOptionTransitionFlipFromTop;
-  } else if ([direction isEqualToString:@"down"]) {
-    animationOptions = UIViewAnimationOptionTransitionFlipFromBottom;
-  } else {
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"direction should be one of up|down|left|right"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-    return;
-  }
-  
-  if ([self loadHrefIfPassed:href]) {
-    [UIView transitionWithView:self.viewController.view
-                    duration:duration
-                     options:animationOptions | UIViewAnimationOptionAllowAnimatedContent // that last bit prevents screenshot-based animation (https://developer.apple.com/library/ios/documentation/windowsviews/conceptual/viewpg_iphoneos/animatingviews/animatingviews.html)
-                  animations:^{}
-                  completion:^(BOOL finished) {
-                    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-                    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-                  }];
-  }
-}
-
 - (void) slide:(CDVInvokedUrlCommand*)command {
   _command = command;
   NSMutableDictionary *args = [command.arguments objectAtIndex:0];
@@ -51,15 +14,15 @@
   // duration/delay is passed in ms, but needs to be in sec here
   duration = duration / 1000;
   delay = delay / 1000;
-  
+
   CGFloat width = self.viewController.view.frame.size.width;
   CGFloat height = self.viewController.view.frame.size.height;
-  
+
   CGFloat transitionToX = 0;
   CGFloat transitionToY = 0;
   int screenshotSlowdownFactor = 1;
   int webviewSlowdownFactor = 1;
-  
+
   if ([direction isEqualToString:@"left"]) {
     transitionToX = -width;
     screenshotSlowdownFactor = [slowdownfactor intValue];
@@ -73,17 +36,17 @@
     transitionToY = height;
     webviewSlowdownFactor = [slowdownfactor intValue];
   }
-  
+
   CGSize viewSize = self.viewController.view.bounds.size;
-  UIGraphicsBeginImageContextWithOptions(viewSize, NO, 1.0);
+  UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0);
   [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
-  
+
   // Read the UIImage object
   UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
   UIGraphicsEndImageContext();
-  
+
   [_screenShotImageView setFrame:CGRectMake(0, 0, width, height)];
-  
+
   _screenShotImageView = [[UIImageView alloc]initWithFrame:[self.viewController.view.window frame]];
   [_screenShotImageView setImage:image];
   if ([direction isEqualToString:@"left"] || [direction isEqualToString:@"up"]) {
@@ -104,11 +67,11 @@
                      CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
                      [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
                    }];
-  
-  
+
+
   // included the code below for the 'push' animation, divide transitionX and Y for a more subtle effect
   [self.webView setFrame:CGRectMake(-transitionToX/webviewSlowdownFactor, -transitionToY/webviewSlowdownFactor, width, height)];
-  
+
   [UIView animateWithDuration:duration
                         delay:delay
                       options:UIViewAnimationOptionCurveEaseInOut
@@ -120,7 +83,6 @@
   }
 }
 
-
 - (void) drawer:(CDVInvokedUrlCommand*)command {
   _command = command;
   NSMutableDictionary *args = [command.arguments objectAtIndex:0];
@@ -128,26 +90,26 @@
   NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
   NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
   NSString *href = [args objectForKey:@"href"];
-  
+
   // duration/delay is passed in ms, but needs to be in sec here
   duration = duration / 1000;
   delay = delay / 1000;
-  
+
   CGFloat width = self.viewController.view.frame.size.width;
   CGFloat height = self.viewController.view.frame.size.height;
-  
+
   CGFloat transitionToX = 0;
-  
+
   if ([action isEqualToString:@"open"]) {
     transitionToX = width-44;
   } else if ([action isEqualToString:@"close"]) {
     transitionToX = -(width-44);
   }
-  
+
   CGSize viewSize = self.viewController.view.bounds.size;
-  UIGraphicsBeginImageContextWithOptions(viewSize, NO, 1.0);
+  UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0);
   [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
-  
+
   // Read the UIImage object
   UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
   UIGraphicsEndImageContext();
@@ -177,7 +139,7 @@
     self.webView.layer.shadowOpacity = 0.5f;
     self.webView.layer.shadowPath = shadowPath.CGPath;
   }
-  
+
   if ([self loadHrefIfPassed:href]) {
     if ([action isEqualToString:@"open"]) {
     [UIView animateWithDuration:duration
@@ -194,11 +156,11 @@
                        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
                      }];
     }
-    
+
     // included the code below for the 'push' animation, divide transitionX and Y for a more subtle effect
     if ([action isEqualToString:@"close"]) {
       [self.webView setFrame:CGRectMake(width-44, 0, width, height)];
-    
+
       [UIView animateWithDuration:duration
                             delay:delay
                           options:UIViewAnimationOptionCurveEaseInOut
@@ -211,6 +173,43 @@
                             [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
                        }];
     }
+  }
+}
+
+- (void) flip:(CDVInvokedUrlCommand*)command {
+  _command = command;
+  NSMutableDictionary *args = [command.arguments objectAtIndex:0];
+  NSString *direction = [args objectForKey:@"direction"];
+  NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
+  NSString *href = [args objectForKey:@"href"];
+
+  // duration/delay is passed in ms, but needs to be in sec here
+  duration = duration / 1000;
+
+  UIViewAnimationOptions animationOptions;
+  if ([direction isEqualToString:@"left"]) {
+    animationOptions = UIViewAnimationOptionTransitionFlipFromLeft;
+  } else if ([direction isEqualToString:@"right"]) {
+    animationOptions = UIViewAnimationOptionTransitionFlipFromRight;
+  } else if ([direction isEqualToString:@"up"]) {
+    animationOptions = UIViewAnimationOptionTransitionFlipFromTop;
+  } else if ([direction isEqualToString:@"down"]) {
+    animationOptions = UIViewAnimationOptionTransitionFlipFromBottom;
+  } else {
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"direction should be one of up|down|left|right"];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    return;
+  }
+
+  if ([self loadHrefIfPassed:href]) {
+    [UIView transitionWithView:self.viewController.view
+                      duration:duration
+                       options:animationOptions | UIViewAnimationOptionAllowAnimatedContent // that last bit prevents screenshot-based animation (https://developer.apple.com/library/ios/documentation/windowsviews/conceptual/viewpg_iphoneos/animatingviews/animatingviews.html)
+                    animations:^{}
+                    completion:^(BOOL finished) {
+                      CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+                      [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+                    }];
   }
 }
 

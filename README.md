@@ -29,109 +29,26 @@ Slide out the current page to reveal the next one. By a native transitions.
 
 iOS
 
-<img src="screenshots/ios-share.png" width="235"/>&nbsp;
-<img src="screenshots/ios-delete.png" width="235"/>&nbsp;
-<img src="screenshots/ios-logout.png" width="235"/>
-
+<img src="screenshots/ios/slide-full.png" width="235"/>&nbsp;
+<img src="screenshots/ios/slide-partial.png" width="235"/>
 
 Android
 
-<img src="screenshots/android-share.png" width="235"/>&nbsp;
-<img src="screenshots/android-delete.png" width="235"/>&nbsp;
-<img src="screenshots/android-logout.png" width="235"/>
+<img src="screenshots/android/slide-full.png" width="235"/>&nbsp;
+<img src="screenshots/android/slide-partial.png" width="235"/>
 
 ## 3. Installation
 
-### Automatically (CLI / Plugman)
-Compatible with [Cordova Plugman](https://github.com/apache/cordova-plugman), compatible with [PhoneGap 3.0 CLI](http://docs.phonegap.com/en/3.0.0/guide_cli_index.md.html#The%20Command-line%20Interface_add_features), here's how it works with the CLI (backup your project first!):
-
-```
-$ phonegap local plugin add https://github.com/EddyVerbruggen/cordova-plugin-pagetransitions.git
-```
-or
-```
-$ cordova plugin add https://github.com/EddyVerbruggen/cordova-plugin-pagetransitions
-$ cordova prepare
-```
-
-PageTransitions.js is brought in automatically. There is no need to change or add anything in your html.
+TODO
 
 ### Manually
 
-1\. Add the following xml to your `config.xml` files:
+TODO
 
-#### iOS
-```xml
-<feature name="PageTransitions">
-  <param name="ios-package" value="PageTransitions" />
-</feature>
-```
 
-#### Android
-```xml
-<feature name="PageTransitions">
-  <param name="android-package" value="nl.xservices.plugins.pagetransitions.PageTransitions"/>
-</feature>
-```
+## 4. Usage
 
-2\. Grab a copy of PageTransitions.js, add it to your project and reference it in `index.html`:
-```html
-<script type="text/javascript" src="js/PageTransitions.js"></script>
-```
-
-3\. Download the source files and copy them to your project.
-
-iOS: Copy the `.h` and `.m` files to `platforms/ios/<ProjectName>/Plugins`
-
-Android: Copy `PageTransitions.java` to `src/nl/xservices/plugins/pagetransitions/`
-
-### PhoneGap Build
-PageTransitions is pending approval at PhoneGap build too. Hang on..
-
-## 4. Usage (TODO: a few sample apps in the demo dir?)
-Check the [demo code](demo) to get you going quickly,
-or copy-paste some of the code below.
-
-TODO STUFF BELOW..
-
-```js
-  var callback = function(buttonIndex) {
-    setTimeout(function() {
-      // like other Cordova plugins (prompt, confirm) the buttonIndex is 1-based (first button is index 1)
-      alert('button index clicked: ' + buttonIndex);
-    });
-  };
-
-  function testShareSheet() {
-    var options = {
-        'title': 'What do you want with this image?',
-        'buttonLabels': ['Share via Facebook', 'Share via Twitter'],
-        'androidEnableCancelButton' : true,
-        'addCancelButtonWithLabel': 'Cancel',
-        'addDestructiveButtonWithLabel' : 'Delete it'
-    };
-    // Depending on the buttonIndex, you can now call shareViaFacebook or shareViaTwitter
-    // of the SocialSharing plugin (https://github.com/EddyVerbruggen/SocialSharing-PhoneGap-Plugin)
-    window.plugins.actionsheet.show(options, callback);
-  };
-
-  function testDeleteSheet() {
-    var options = {
-        'addCancelButtonWithLabel': 'Cancel',
-        'addDestructiveButtonWithLabel' : 'Delete note'
-    };
-    window.plugins.actionsheet.show(options, callback);
-  };
-
-  function testLogoutSheet() {
-    var options = {
-        'buttonLabels': ['Log out'],
-        'androidEnableCancelButton' : true,
-        'addCancelButtonWithLabel': 'Cancel'
-    };
-    window.plugins.actionsheet.show(options, callback);
-  };
-```
+TODO
 
 ## 5. License
 
