@@ -1,7 +1,7 @@
-function PageTransitions() {
+function NativePageTransitions() {
 }
 
-PageTransitions.prototype.slide = function (options, onSuccess, onError) {
+NativePageTransitions.prototype.slide = function (options, onSuccess, onError) {
   var opts = options || {};
   opts.direction = opts.direction || "left";
   opts.duration = opts.duration || 500;
@@ -10,16 +10,16 @@ PageTransitions.prototype.slide = function (options, onSuccess, onError) {
   // setting slowdownfactor > 1 makes the next page slide less pixels.
   // Try 3 for a nice effect, especially on iOS.
   opts.slowdownfactor  = opts.slowdownfactor || 1;
-  cordova.exec(onSuccess, onError, "PageTransitions", "slide", [opts]);
+  cordova.exec(onSuccess, onError, "NativePageTransitions", "slide", [opts]);
 };
 
-PageTransitions.install = function () {
+NativePageTransitions.install = function () {
   if (!window.plugins) {
     window.plugins = {};
   }
 
-  window.plugins.pagetransitions = new PageTransitions();
-  return window.plugins.pagetransitions;
+  window.plugins.nativepagetransitions = new NativePageTransitions();
+  return window.plugins.nativepagetransitions;
 };
 
-cordova.addConstructor(PageTransitions.install);
+cordova.addConstructor(NativePageTransitions.install);

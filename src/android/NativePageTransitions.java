@@ -1,4 +1,4 @@
-package nl.xservices.plugins.pagetransitions;
+package com.telerik.plugins.nativepagetransitions;
 
 import android.graphics.Bitmap;
 import android.view.View;
@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class PageTransitions extends CordovaPlugin {
+public class NativePageTransitions extends CordovaPlugin {
 
   ImageView imageView;
   long duration;

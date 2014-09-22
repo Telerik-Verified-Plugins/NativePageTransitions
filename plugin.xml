@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin
     xmlns="http://apache.org/cordova/ns/plugins/1.0"
-    id="nl.x-services.plugins.pagetransitions"
-    version="0.0.1">
+    id="com.telerik.plugins.nativepagetransitions"
+    version="0.1.0">
 
-	<name>Page Transitions</name>
+	<name>Native Page Transitions</name>
 
 	<description>
     Slide out the current page to reveal the next one. By a native transitions.
@@ -16,29 +16,29 @@
 		<engine name="cordova" version=">=3.0.0"/>
 	</engines>
 
-	<js-module src="www/PageTransitions.js" name="PageTransitions">
-		<clobbers target="window.plugins.pagetransitions"/>
+	<js-module src="www/NativePageTransitions.js" name="NativePageTransitions">
+		<clobbers target="window.plugins.nativepagetransitions"/>
 	</js-module>
 
 	<!-- ios -->
 	<platform name="ios">
 		<config-file target="config.xml" parent="/*">
-			<feature name="PageTransitions">
-				<param name="ios-package" value="PageTransitions"/>
+			<feature name="NativePageTransitions">
+				<param name="ios-package" value="NativePageTransitions"/>
 			</feature>
 		</config-file>
-		<header-file src="src/ios/PageTransitions.h"/>
-		<source-file src="src/ios/PageTransitions.m"/>
+		<header-file src="src/ios/NativePageTransitions.h"/>
+		<source-file src="src/ios/NativePageTransitions.m"/>
 	</platform>
 
 	<!-- android -->
 	<platform name="android">
 		<config-file target="res/xml/config.xml" parent="/*">
-			<feature name="PageTransitions">
-				<param name="android-package" value="nl.xservices.plugins.pagetransitions.PageTransitions"/>
+			<feature name="NativePageTransitions">
+				<param name="android-package" value="com.telerik.plugins.nativepagetransitions.NativePageTransitions"/>
         <param name="onload" value="true" />
 			</feature>
 		</config-file>
-		<source-file src="src/android/PageTransitions.java" target-dir="src/nl/xservices/plugins/pagetransitions"/>
+		<source-file src="src/android/NativePageTransitions.java" target-dir="src/com/telerik/plugins/nativepagetransitions"/>
 	</platform>
 </plugin>

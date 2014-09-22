@@ -1,6 +1,6 @@
-#import "PageTransitions.h"
+#import "NativePageTransitions.h"
 
-@implementation PageTransitions
+@implementation NativePageTransitions
 
 - (void) slide:(CDVInvokedUrlCommand*)command {
   NSMutableDictionary *args = [command.arguments objectAtIndex:0];

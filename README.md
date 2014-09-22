@@ -1,5 +1,5 @@
-# Page Transitions Cordova / PhoneGap Plugin
-by [Eddy Verbruggen](http://twitter.com/eddyverbruggen)
+# Native Page Transitions Cordova / PhoneGap Plugin
+by [Telerik](http://www.telerik.com)
 
 ## 0. Index
 

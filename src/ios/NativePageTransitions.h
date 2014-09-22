@@ -1,6 +1,6 @@
 #import "Cordova/CDV.h"
 
-@interface PageTransitions : CDVPlugin
+@interface NativePageTransitions : CDVPlugin
 
 @property (strong, nonatomic) IBOutlet UIImageView *screenShotImageView;
 
