@@ -4,13 +4,31 @@ function NativePageTransitions() {
 NativePageTransitions.prototype.slide = function (options, onSuccess, onError) {
   var opts = options || {};
   opts.direction = opts.direction || "left";
+  opts.duration = opts.duration || 400;
+  opts.androiddelay = opts.androiddelay || 50;
+  opts.iosdelay = opts.iosdelay || 20;
+  // setting slowdownfactor > 1 makes the next page slide less pixels. Use 1 for side-by-side.
+  opts.slowdownfactor = opts.slowdownfactor || 3;
+  cordova.exec(onSuccess, onError, "NativePageTransitions", "slide", [opts]);
+};
+
+NativePageTransitions.prototype.drawer = function (options, onSuccess, onError) {
+  var opts = options || {};
+  opts.action = opts.action || "open";
+  opts.direction = opts.direction || "right";
+  opts.duration = opts.duration || 400;
+  opts.androiddelay = opts.androiddelay || 50;
+  opts.iosdelay = opts.iosdelay || 30;
+  cordova.exec(onSuccess, onError, "NativePageTransitions", "drawer", [opts]);
+};
+
+NativePageTransitions.prototype.flip = function (options, onSuccess, onError) {
+  var opts = options || {};
+  opts.direction = opts.direction || "right";
   opts.duration = opts.duration || 500;
   opts.androiddelay = opts.androiddelay || 50;
   opts.iosdelay = opts.iosdelay || 0;
-  // setting slowdownfactor > 1 makes the next page slide less pixels.
-  // Try 3 for a nice effect, especially on iOS.
-  opts.slowdownfactor  = opts.slowdownfactor || 1;
-  cordova.exec(onSuccess, onError, "NativePageTransitions", "slide", [opts]);
+  cordova.exec(onSuccess, onError, "NativePageTransitions", "flip", [opts]);
 };
 
 NativePageTransitions.install = function () {
