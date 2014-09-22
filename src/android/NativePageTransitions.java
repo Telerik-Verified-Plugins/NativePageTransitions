@@ -113,8 +113,8 @@ public class NativePageTransitions extends CordovaPlugin {
     if ("slide".equalsIgnoreCase(action)) {
 
       duration = json.getLong("duration");
-      androiddelay = json.getLong("androiddelay");
       direction = json.getString("direction");
+      androiddelay = json.getLong("androiddelay");
       slowdownfactor = json.getInt("slowdownfactor");
 
       cordova.getActivity().runOnUiThread(new Runnable() {
@@ -146,7 +146,9 @@ public class NativePageTransitions extends CordovaPlugin {
 
     } else if ("flip".equalsIgnoreCase(action)) {
 
+      duration = json.getLong("duration");
       direction = json.getString("direction");
+      androiddelay = json.getLong("androiddelay");
 
       cordova.getActivity().runOnUiThread(new Runnable() {
         @Override
