@@ -18,13 +18,12 @@ Slide out the current page to reveal the next one. By a native transitions.
 * Compatible with [Cordova Plugman](https://github.com/apache/cordova-plugman).
 * For iOS and Android.
 
-### Currently supported transtions
+### Currently supported native page transitions
 
 * slide left ("next page")
 * slide right ("previous page")
 * slide up
 * slide down
-
 * flip left
 * flip right
 * flip up (iOS only)
