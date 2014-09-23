@@ -2,14 +2,16 @@ package com.telerik.plugins.nativepagetransitions;
 
 import android.graphics.Bitmap;
 import android.os.Build;
+import android.support.v4.view.ViewCompat;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.webkit.WebView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import com.telerik.plugins.nativepagetransitions.lib.AnimationFactory;
+import com.tekle.oss.android.animation.AnimationFactory;
 import org.apache.cordova.*;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -28,6 +30,7 @@ public class NativePageTransitions extends CordovaPlugin {
   private int slowdownfactor;
   private CallbackContext _callbackContext;
   private String _action;
+  // this plugin listens to page changes, so only kick in a transition when it was actually requested by the JS bridge
   private boolean calledFromJS;
   private FrameLayout layout;
   private final boolean requiresRedraw = Build.VERSION.SDK_INT < 19; // Build.VERSION_CODES.KITKAT
@@ -55,6 +58,11 @@ public class NativePageTransitions extends CordovaPlugin {
     // TODO may be replaced by a 'load' listener (but that doesnt work for hashnav)
     webView.setWebViewClient(new MyCordovaWebViewClient(cordova, webView));
     imageView = new ImageView(cordova.getActivity().getBaseContext());
+
+    // Transitions are below par when this is switched off in the manifest, so enabling it here.
+    // We may need to have developers suppress this via a param in the future.
+    enableHardwareAcceleration();
+
     layout = new FrameLayout(cordova.getActivity());
 //    layout = new ViewAnimator(cordova.getActivity());
     layout.setLayoutParams(webView.getLayoutParams());
@@ -67,26 +75,13 @@ public class NativePageTransitions extends CordovaPlugin {
     layout.addView(imageView);
   }
 
-  /*
-  private void executePendingTransition() {
-    if (true) {
-      // TODO
-    } else {
-      _callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "no pending transition"));
-    }
-  }
-  */
-
   @Override
   public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
     _action = action;
     _callbackContext = callbackContext;
+
     final JSONObject json = args.getJSONObject(0);
     final String href = json.isNull("href") ? null : json.getString("href");
-
-    if ("executePendingTransition".equalsIgnoreCase(action)) {
-      return true;
-    }
 
     // check whether or not the file exists
     if (href != null) {
@@ -122,6 +117,9 @@ public class NativePageTransitions extends CordovaPlugin {
         public void run() {
           webView.setDrawingCacheEnabled(true);
           Bitmap bitmap = Bitmap.createBitmap(webView.getDrawingCache());
+          if (Build.VERSION.SDK_INT >= 12) {
+            bitmap.setHasAlpha(false);
+          }
           webView.setDrawingCacheEnabled(false);
           imageView.setImageBitmap(bitmap);
           bringToFront(imageView);
@@ -155,6 +153,9 @@ public class NativePageTransitions extends CordovaPlugin {
         public void run() {
           webView.setDrawingCacheEnabled(true);
           Bitmap bitmap = Bitmap.createBitmap(webView.getDrawingCache());
+          if (Build.VERSION.SDK_INT >= 12) {
+            bitmap.setHasAlpha(false);
+          }
           webView.setDrawingCacheEnabled(false);
           imageView.setImageBitmap(bitmap);
 
@@ -196,9 +197,9 @@ public class NativePageTransitions extends CordovaPlugin {
             if ("left".equals(direction)) {
               flipDirection = AnimationFactory.FlipDirection.RIGHT_LEFT;
             } else if ("up".equals(direction)) {
-              flipDirection = AnimationFactory.FlipDirection.RIGHT_LEFT; // TODO impl DOWN_UP;
-            } else if ("down".equals(direction)) {
               flipDirection = AnimationFactory.FlipDirection.LEFT_RIGHT; // TODO impl UP_DOWN;
+            } else if ("down".equals(direction)) {
+              flipDirection = AnimationFactory.FlipDirection.RIGHT_LEFT; // TODO impl DOWN_UP;
             } else {
               flipDirection = AnimationFactory.FlipDirection.LEFT_RIGHT;
             }
@@ -213,6 +214,8 @@ public class NativePageTransitions extends CordovaPlugin {
               @Override
               public void onAnimationEnd(Animation animation) {
                 imageView.setImageBitmap(null);
+                animation.reset();
+                imageView.clearAnimation();
               }
 
               @Override
@@ -226,6 +229,8 @@ public class NativePageTransitions extends CordovaPlugin {
 
               @Override
               public void onAnimationEnd(Animation animation) {
+                animation.reset();
+                webView.clearAnimation();
                 _callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
               }
 
@@ -317,22 +322,9 @@ public class NativePageTransitions extends CordovaPlugin {
               }
             });
 
-//            imageView.animate()
-//                .alpha(.7f)
-//                .setDuration(2000)
-//            .translationX(-600f)
-//            .rotationX(20f)
-//
-//            ;
-//            imageView.setVisibility(View.GONE);
-
-//            webView.animate()
-//                .alpha(.4f)
-//                .setDuration(4000);
             imageView.setAnimation(imageViewAnimation);
             webView.setAnimation(webViewAnimation);
             layout.startLayoutAnimation();
-//            layout.setAnimationCacheEnabled(true); //?
 
             calledFromJS = false;
           }
@@ -347,4 +339,15 @@ public class NativePageTransitions extends CordovaPlugin {
       view.requestLayout();
     }
   }
+
+  private void enableHardwareAcceleration() {
+    if (Build.VERSION.SDK_INT >= 11) {
+      cordova.getActivity().getWindow().setFlags(
+          WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+          WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+    }
+    ViewCompat.setLayerType(webView, ViewCompat.LAYER_TYPE_HARDWARE, null);
+    ViewCompat.setLayerType(imageView, ViewCompat.LAYER_TYPE_HARDWARE, null);
+  }
+
 }
