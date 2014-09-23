@@ -40,5 +40,7 @@
 			</feature>
 		</config-file>
 		<source-file src="src/android/NativePageTransitions.java" target-dir="src/com/telerik/plugins/nativepagetransitions"/>
+		<source-file src="src/android/lib/FlipAnimation.java" target-dir="src/com/telerik/plugins/nativepagetransitions/lib"/>
+		<source-file src="src/android/lib/AnimationFactory.java" target-dir="src/com/telerik/plugins/nativepagetransitions/lib"/>
 	</platform>
 </plugin>

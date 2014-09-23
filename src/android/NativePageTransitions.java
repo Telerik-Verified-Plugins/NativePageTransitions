@@ -2,7 +2,6 @@ package com.telerik.plugins.nativepagetransitions;
 
 import android.graphics.Bitmap;
 import android.os.Build;
-import android.support.v4.view.ViewCompat;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -11,7 +10,7 @@ import android.view.animation.TranslateAnimation;
 import android.webkit.WebView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import com.tekle.oss.android.animation.AnimationFactory;
+import com.telerik.plugins.nativepagetransitions.lib.AnimationFactory;
 import org.apache.cordova.*;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -345,9 +344,9 @@ public class NativePageTransitions extends CordovaPlugin {
       cordova.getActivity().getWindow().setFlags(
           WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
           WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+      webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+      imageView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
     }
-    ViewCompat.setLayerType(webView, ViewCompat.LAYER_TYPE_HARDWARE, null);
-    ViewCompat.setLayerType(imageView, ViewCompat.LAYER_TYPE_HARDWARE, null);
   }
 
 }
