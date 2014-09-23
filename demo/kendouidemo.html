@@ -4,11 +4,29 @@
   <title>Kendo UI Demo</title>
   <script type="text/javascript" src="cordova.js"></script>
   <script>
+
+    window.onerror = function(msg, file, line) {
+      alert(msg + '; ' + file + '; ' + line);
+    };
+
+    //    window.addEventListener("load", function(){alert('load')}, false);
+
+    //    document.addEventListener("DOMContentLoaded", function(){alert('dom')}, false);
+
     // this piece of code is an automatic kendoui-cordova-pagetransitions wiring thingy
     // .. move to a new js file when done, so users can drop it in
 
     // check that the plugin is loaded (after deviceready ofcourse)
     document.addEventListener("deviceready", wireKendoToCordovaPageTransitions, false);
+
+    function shown(x) {
+//      alert(x["sender"].id);
+      // get old function from element and invoke it
+    }
+
+    function theOldShowFunction() {
+      alert('in old');
+    }
 
     function wireKendoToCordovaPageTransitions() {
       if (window.plugins && window.plugins.pagetransitions) {
@@ -22,35 +40,29 @@
               var href = transAnchor.getAttribute("href");
               transAnchor.removeAttribute("href"); // note this removes the link style.. is that ok? for buttons it likely is
               transAnchor.removeAttribute("data-transition");
+
+              // wire the show event of the to-view to the performPendingTransition funtion of the plugin
+              if (href.indexOf("#") == 0) {
+                var toDiv = document.querySelector(href);
+                // TODO if there is already a data-show, combine them
+                if (toDiv.hasAttribute("data-show")) {
+                  var oldShowFunction = toDiv.getAttribute("data-show");
+                  toDiv.setAttribute("data-show-old", oldShowFunction);
+                }
+                toDiv.setAttribute("data-show", "shown");
+              }
+
               var androiddelay = transAnchor.getAttribute("data-transition-native-androiddelay");
               if (androiddelay == null) {
                 androiddelay = 100;
               }
-              var iosdelay = transAnchor.getAttribute("data-transition-native-iosdelay");
-              if (iosdelay == null) {
-                iosdelay = 20;
-              }
-              transAnchor.setAttribute("ontouchend", "slide('"+slideDirection+"', '"+href+"', '"+androiddelay+"', '"+iosdelay+"')");
+              transAnchor.setAttribute("ontouchend", "slide('"+slideDirection+"', '"+href+"', '"+androiddelay+"')");
             }
           }
         }
       } else {
         console.log("window.plugins.pagetransitions not available, is it installed correctly?")
       }
-    }
-
-    function slide(direction, href, androiddelay, iosdelay) {
-      window.plugins.pagetransitions.slide({
-            'direction': direction,
-            'duration': 350,
-            'slowdownfactor': 3,
-            'androiddelay': androiddelay,
-            'iosdelay': iosdelay,
-            'href': href // can be a #hash or a .html file
-          },
-          function () {
-            console.log('slide transition finished');
-          });
     }
   </script>
 
@@ -60,6 +72,31 @@
   <link href="http://cdn.kendostatic.com/2014.2.716/styles/kendo.mobile.all.min.css" rel="stylesheet" />
   <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
   <script src="http://cdn.kendostatic.com/2014.2.716/js/kendo.all.min.js"></script>
+
+
+  <script>
+    function slide(direction, href, delay) {
+
+      // TODO find kendo on load complete event to fire the actual transition
+      // see http://docs.telerik.com/kendo-ui/api/mobile/view
+      window.addEventListener("show", function(){alert('show 1')}, false);
+      document.addEventListener("show", function(){alert('show 2')}, false);
+
+//      setTimeout(function() {
+      document.location.href = href;
+//      }, 0);
+
+      window.plugins.pagetransitions.slide({
+            'direction': direction,
+            'duration': 350,
+            'androiddelay': delay
+//            'href': href // can be a #hash or a .html file
+          },
+          function () {
+//            console.log('slide transition finished');
+          });
+    }
+  </script>
 
 </head>
 <body>
@@ -76,7 +113,7 @@
   <a href="#view-transitions-welcome" data-role="button" class="transitions-button" data-transition="slide:left" data-transition-native-androiddelay="220">Forward (native)</a>
 </div>
 
-<div data-role="view" data-title="Welcome" id="view-transitions-welcome" data-persist="true">
+<div data-show="theOldShowFunction" data-role="view" data-title="Welcome" id="view-transitions-welcome" data-persist="true">
   <br/>
   <br/>
   <a data-transition-native="false" data-role="button" href="#view-transitions" data-transition="slide:right" class="transitions-button">Back (css)</a>

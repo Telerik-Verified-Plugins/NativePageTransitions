@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.3/jquery.mobile-1.4.3.min.css" />
   <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
   <script>
-    window.window.onerror = function(msg, file, line) {
+    window.onerror = function(msg, file, line) {
       alert(msg + '; ' + file + '; ' + line);
     };
     // override some jqm defaults, need to be done before jqm is loaded
@@ -19,13 +19,17 @@
   <script type="text/javascript" src="cordova.js"></script>
   <script>
     function slide(direction) {
-      window.plugins.pagetransitions.slide({
-            'direction': direction,
-            'duration': 500
-          },
-          function () {
-            console.log('slide transition finished');
-          });
+      // wrap this in a sort timeout if you want to show the button highlight effect when it's pressed.
+      // caveat: making the timeout too long makes the page change before the transition kicks in..
+      setTimeout(function() {
+        window.plugins.pagetransitions.slide({
+              'direction': direction,
+              'duration': 500
+            },
+            function () {
+              console.log('slide transition finished');
+            });
+      }, 50)
     }
   </script>
 </head>

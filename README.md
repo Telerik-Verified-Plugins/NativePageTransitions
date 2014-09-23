@@ -25,17 +25,22 @@ Slide out the current page to reveal the next one. By a native transitions.
 * slide up
 * slide down
 
+* flip left
+* flip right
+* flip up (iOS only)
+* flip down (iOS only)
+
 ## 2. Screenshots
 
 iOS
 
-<img src="screenshots/ios/slide-full.png" width="235"/>&nbsp;
-<img src="screenshots/ios/slide-partial.png" width="235"/>
+<!--img src="screenshots/ios/slide-full.png" width="235"/>&nbsp;
+<img src="screenshots/ios/slide-partial.png" width="235"/-->
 
 Android
 
-<img src="screenshots/android/slide-full.png" width="235"/>&nbsp;
-<img src="screenshots/android/slide-partial.png" width="235"/>
+<!--img src="screenshots/android/slide-full.png" width="235"/>&nbsp;
+<img src="screenshots/android/slide-partial.png" width="235"/-->
 
 ## 3. Installation
 
