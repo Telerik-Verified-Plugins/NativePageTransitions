@@ -5,8 +5,7 @@ import android.os.Build;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.view.animation.Animation;
-import android.view.animation.TranslateAnimation;
+import android.view.animation.*;
 import android.webkit.WebView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -24,7 +23,7 @@ public class NativePageTransitions extends CordovaPlugin {
 
   private ImageView imageView;
   private long duration;
-  private long androiddelay;
+  private long delay;
   private String direction;
   private int slowdownfactor;
   private CallbackContext _callbackContext;
@@ -108,7 +107,7 @@ public class NativePageTransitions extends CordovaPlugin {
 
       duration = json.getLong("duration");
       direction = json.getString("direction");
-      androiddelay = json.getLong("androiddelay");
+      delay = json.getLong("androiddelay");
       slowdownfactor = json.getInt("slowdownfactor");
 
       cordova.getActivity().runOnUiThread(new Runnable() {
@@ -145,7 +144,7 @@ public class NativePageTransitions extends CordovaPlugin {
 
       duration = json.getLong("duration");
       direction = json.getString("direction");
-      androiddelay = json.getLong("androiddelay");
+      delay = json.getLong("androiddelay");
 
       cordova.getActivity().runOnUiThread(new Runnable() {
         @Override
@@ -245,7 +244,7 @@ public class NativePageTransitions extends CordovaPlugin {
           }
         });
       }
-    }, androiddelay);
+    }, delay);
   }
 
   private void doSlideTransition() {
@@ -287,23 +286,40 @@ public class NativePageTransitions extends CordovaPlugin {
               webviewSlowdownFactor = slowdownfactor;
             }
 
-            // NOTE: we could also use methods like AnimationFactory.inFromLeftAnimation(1000, null);
+            // imageview animation
+            final AnimationSet imageViewAnimation = new AnimationSet(true);
 
-            final Animation imageViewAnimation = new TranslateAnimation(
+            final Animation imageViewAnimation1 = new TranslateAnimation(
                 TranslateAnimation.RELATIVE_TO_PARENT, 0f,
                 TranslateAnimation.RELATIVE_TO_PARENT, transitionToX / screenshotSlowdownFactor,
                 translateAnimationY, 0,
                 translateAnimationY, transitionToY / screenshotSlowdownFactor);
-            imageViewAnimation.setDuration(duration);
-//            imageViewAnimation.setInterpolator(new DecelerateInterpolator());
+            imageViewAnimation1.setDuration(duration);
+            imageViewAnimation.addAnimation(imageViewAnimation1);
 
-            final Animation webViewAnimation = new TranslateAnimation(
+            if (slowdownfactor != 1 && ("left".equals(direction) || "up".equals(direction))) {
+              final Animation imageViewAnimation2 = new AlphaAnimation(1, 0.4f);
+              imageViewAnimation2.setDuration(duration);
+              imageViewAnimation.addAnimation(imageViewAnimation2);
+            }
+
+            // webview animation
+            final AnimationSet webViewAnimation = new AnimationSet(true);
+
+            final Animation webViewAnimation1 = new TranslateAnimation(
                 TranslateAnimation.RELATIVE_TO_PARENT, -transitionToX / webviewSlowdownFactor,
                 TranslateAnimation.RELATIVE_TO_PARENT, 0,
                 TranslateAnimation.ABSOLUTE, -transitionToY / webviewSlowdownFactor,
                 TranslateAnimation.ABSOLUTE, 0);
-            webViewAnimation.setDuration(duration);
-//            webViewAnimation.setInterpolator(new OvershootInterpolator());
+            webViewAnimation1.setDuration(duration);
+            webViewAnimation.addAnimation(webViewAnimation1);
+//            webViewAnimation1.setInterpolator(new OvershootInterpolator());
+
+            if (slowdownfactor != 1 && ("right".equals(direction) || "down".equals(direction))) {
+              final Animation webViewAnimation2 = new AlphaAnimation(0.4f, 1f);
+              webViewAnimation2.setDuration(duration);
+              webViewAnimation.addAnimation(webViewAnimation2);
+            }
 
             imageViewAnimation.setAnimationListener(new Animation.AnimationListener() {
               @Override
@@ -329,7 +345,7 @@ public class NativePageTransitions extends CordovaPlugin {
           }
         });
       }
-    }, androiddelay);
+    }, delay);
   }
 
   private void bringToFront(View view) {
