@@ -113,6 +113,7 @@
   _command = command;
   NSMutableDictionary *args = [command.arguments objectAtIndex:0];
   NSString *action = [args objectForKey:@"action"];
+  NSString *origin = [args objectForKey:@"origin"];
   NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
   NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
   NSString *href = [args objectForKey:@"href"];
@@ -125,11 +126,23 @@
   CGFloat height = self.viewController.view.frame.size.height;
   
   CGFloat transitionToX = 0;
+  CGFloat webviewTransitionFromX = 0;
+  int screenshotPx = 44;
   
   if ([action isEqualToString:@"open"]) {
-    transitionToX = width-44;
+    if ([origin isEqualToString:@"right"]) {
+      transitionToX = -width+screenshotPx;
+    } else {
+      transitionToX = width-screenshotPx;
+    }
   } else if ([action isEqualToString:@"close"]) {
-    transitionToX = -(width-44);
+    if ([origin isEqualToString:@"right"]) {
+      transitionToX = screenshotPx;
+      webviewTransitionFromX = -width+screenshotPx;
+    } else {
+      transitionToX = -width+screenshotPx;
+      webviewTransitionFromX = width-screenshotPx;
+    }
   }
   
   CGSize viewSize = self.viewController.view.bounds.size;
@@ -183,9 +196,8 @@
                      }];
     }
     
-    // included the code below for the 'push' animation, divide transitionX and Y for a more subtle effect
     if ([action isEqualToString:@"close"]) {
-      [self.webView setFrame:CGRectMake(width-44, 0, width, height)];
+      [self.webView setFrame:CGRectMake(webviewTransitionFromX, 0, width, height)];
     
       [UIView animateWithDuration:duration
                             delay:delay
