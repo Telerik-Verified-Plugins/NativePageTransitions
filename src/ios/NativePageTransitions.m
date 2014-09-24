@@ -207,11 +207,12 @@
   NSMutableDictionary *args = [command.arguments objectAtIndex:0];
   NSString *direction = [args objectForKey:@"direction"];
   NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
+  NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
   NSString *href = [args objectForKey:@"href"];
   
-  // duration/delay is passed in ms, but needs to be in sec here
+  // duration is passed in ms, but needs to be in sec here
   duration = duration / 1000;
-  
+
   UIViewAnimationOptions animationOptions;
   if ([direction isEqualToString:@"right"]) {
     animationOptions = UIViewAnimationOptionTransitionFlipFromLeft;
@@ -228,14 +229,16 @@
   }
   
   if ([self loadHrefIfPassed:href]) {
-    [UIView transitionWithView:self.viewController.view
-                      duration:duration
-                       options:animationOptions | UIViewAnimationOptionAllowAnimatedContent // that last bit prevents screenshot-based animation (https://developer.apple.com/library/ios/documentation/windowsviews/conceptual/viewpg_iphoneos/animatingviews/animatingviews.html)
-                    animations:^{}
-                    completion:^(BOOL finished) {
-                      CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-                      [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-                    }];
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
+      [UIView transitionWithView:self.viewController.view
+                        duration:duration
+                         options:animationOptions | UIViewAnimationOptionAllowAnimatedContent // that last bit prevents screenshot-based animation (https://developer.apple.com/library/ios/documentation/windowsviews/conceptual/viewpg_iphoneos/animatingviews/animatingviews.html)
+                      animations:^{}
+                      completion:^(BOOL finished) {
+                        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+                        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+                      }];
+    });
   }
 }
 
