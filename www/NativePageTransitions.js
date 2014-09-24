@@ -25,7 +25,7 @@ NativePageTransitions.prototype.drawer = function (options, onSuccess, onError) 
 NativePageTransitions.prototype.flip = function (options, onSuccess, onError) {
   var opts = options || {};
   opts.direction = opts.direction || "right";
-  opts.duration = opts.duration || 500;
+  opts.duration = opts.duration || 400;
   opts.androiddelay = opts.androiddelay || 50;
   opts.iosdelay = opts.iosdelay || 50;
   cordova.exec(onSuccess, onError, "NativePageTransitions", "flip", [opts]);

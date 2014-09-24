@@ -12,6 +12,7 @@
   NSNumber *slowdownfactor = [args objectForKey:@"slowdownfactor"];
 
   self.viewController.view.backgroundColor = [UIColor blackColor];
+  self.webView.layer.shadowOpacity = 0;
 
   // duration/delay is passed in ms, but needs to be in sec here
   duration = duration / 1000;
@@ -168,8 +169,6 @@
   if ([action isEqualToString:@"open"]) {
     [UIApplication.sharedApplication.keyWindow.subviews.lastObject insertSubview:_screenShotImageView aboveSubview:self.webView];
   } else {
-//    [UIApplication.sharedApplication.keyWindow.subviews.lastObject insertSubview:_screenShotImageView belowSubview:self.webView];
-    [UIApplication.sharedApplication.keyWindow.subviews.lastObject bringSubviewToFront:self.webView];
     // add a cool shadow here as well
     UIBezierPath *shadowPath = [UIBezierPath bezierPathWithRect:self.webView.bounds];
     self.webView.layer.masksToBounds = NO;
@@ -198,6 +197,11 @@
     
     if ([action isEqualToString:@"close"]) {
       [self.webView setFrame:CGRectMake(webviewTransitionFromX, 0, width, height)];
+      
+      // position thw webview above the screenshot just after the animation kicks in so no flash of the webview occurs
+      dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay+50 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
+        [UIApplication.sharedApplication.keyWindow.subviews.lastObject bringSubviewToFront:self.webView];
+      });
     
       [UIView animateWithDuration:duration
                             delay:delay
