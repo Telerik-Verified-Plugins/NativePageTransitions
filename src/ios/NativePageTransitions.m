@@ -11,9 +11,12 @@
   NSString *href = [args objectForKey:@"href"];
   NSNumber *slowdownfactor = [args objectForKey:@"slowdownfactor"];
 
+  self.viewController.view.backgroundColor = [UIColor blackColor];
+
   // duration/delay is passed in ms, but needs to be in sec here
   duration = duration / 1000;
   delay = delay / 1000;
+  CGFloat lowerLayerAlpha = 0.4f; // TODO consider passing in
   
   CGFloat width = self.viewController.view.frame.size.width;
   CGFloat height = self.viewController.view.frame.size.height;
@@ -38,6 +41,7 @@
   }
   
   CGSize viewSize = self.viewController.view.bounds.size;
+  
   UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0);
   [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
   
@@ -56,7 +60,7 @@
   }
 
   if ([self loadHrefIfPassed:href]) {
-  [UIView animateWithDuration:duration
+    [UIView animateWithDuration:duration
                         delay:delay
                       options:UIViewAnimationOptionCurveEaseInOut // TODO: allow passing in?
                    animations:^{
@@ -67,12 +71,22 @@
                      CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
                      [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
                    }];
+
+    // also, fade out the screenshot a bit to give it some depth
+    if ([slowdownfactor intValue] != 1 && ([direction isEqualToString:@"left"] || [direction isEqualToString:@"up"])) {
+      [UIView animateWithDuration:duration
+                            delay:delay
+                          options:UIViewAnimationOptionCurveEaseInOut
+                       animations:^{
+                         _screenShotImageView.alpha = lowerLayerAlpha;
+                       }
+                       completion:^(BOOL finished) {
+                       }];
+    }
   
+    [self.webView setFrame:CGRectMake(-transitionToX/webviewSlowdownFactor, -transitionToY/webviewSlowdownFactor, width, height)];
   
-  // included the code below for the 'push' animation, divide transitionX and Y for a more subtle effect
-  [self.webView setFrame:CGRectMake(-transitionToX/webviewSlowdownFactor, -transitionToY/webviewSlowdownFactor, width, height)];
-  
-  [UIView animateWithDuration:duration
+    [UIView animateWithDuration:duration
                         delay:delay
                       options:UIViewAnimationOptionCurveEaseInOut
                    animations:^{
@@ -80,6 +94,18 @@
                    }
                    completion:^(BOOL finished) {
                    }];
+
+    if ([slowdownfactor intValue] != 1 && ([direction isEqualToString:@"right"] || [direction isEqualToString:@"down"])) {
+      self.webView.alpha = lowerLayerAlpha;
+      [UIView animateWithDuration:duration
+                            delay:delay
+                          options:UIViewAnimationOptionCurveEaseInOut
+                       animations:^{
+                         self.webView.alpha = 1.0;
+                       }
+                       completion:^(BOOL finished) {
+                       }];
+    }
   }
 }
 
