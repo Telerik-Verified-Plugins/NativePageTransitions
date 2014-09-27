@@ -31,7 +31,8 @@ public class NativePageTransitions extends CordovaPlugin {
   // this plugin listens to page changes, so only kick in a transition when it was actually requested by the JS bridge
   private boolean calledFromJS;
   private FrameLayout layout;
-  private final boolean requiresRedraw = Build.VERSION.SDK_INT < 19; // Build.VERSION_CODES.KITKAT
+  private static final boolean BEFORE_KITKAT = Build.VERSION.SDK_INT < 19;
+  private final boolean requiresRedraw = BEFORE_KITKAT;
 
   class MyCordovaWebViewClient extends CordovaWebViewClient {
     public MyCordovaWebViewClient(CordovaInterface cordova, CordovaWebView view) {
@@ -341,6 +342,13 @@ public class NativePageTransitions extends CordovaPlugin {
             webView.setAnimation(webViewAnimation);
             layout.startLayoutAnimation();
 
+            if (BEFORE_KITKAT) {
+              // This fixes an issue observed on a Samsung Galaxy S3 /w Android 4.3 where the img is shown,
+              // but the transition doesn't kick in unless the screen is touched again.
+              imageView.requestFocusFromTouch();
+              webView.requestFocus();
+            }
+
             calledFromJS = false;
           }
         });
@@ -360,9 +368,12 @@ public class NativePageTransitions extends CordovaPlugin {
       cordova.getActivity().getWindow().setFlags(
           WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
           WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
-      webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
       imageView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+      if (BEFORE_KITKAT) {
+        webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+      } else {
+        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+      }
     }
   }
-
 }

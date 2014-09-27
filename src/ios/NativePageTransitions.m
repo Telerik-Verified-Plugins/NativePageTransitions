@@ -188,7 +188,8 @@
                      }
                      completion:^(BOOL finished) {
                        if ([action isEqualToString:@"close"]) {
-                         [_screenShotImageView removeFromSuperview];
+                         _screenShotImageView = nil;
+                         // [_screenShotImageView removeFromSuperview];
                        }
                        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
                        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
