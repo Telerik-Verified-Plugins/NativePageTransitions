@@ -20,22 +20,35 @@
     <p class="event listening">Connecting to Device</p>
     <p class="event received">Device is Ready</p><br/>
 
+    <button onclick="document.location = 'kendolockdemo/index.html'">KendoUI Lock</button><br/>
+
+    <h2>Drawer</h2>
+    <button onclick="drawer('close', 'left', '#A7A7A7')">close l</button>&nbsp;&nbsp;&nbsp;&nbsp;
+    <button onclick="drawer('open', 'left', 'green')">open l</button><br/>
+    <button onclick="drawer('close', 'right', '#A7A7A7')">close r</button>&nbsp;&nbsp;&nbsp;&nbsp;
+    <button onclick="drawer('open', 'right', 'green')">open r</button><br/>
+
     <h2>Slide</h2>
-    <button ontouchend="slide('up', 'lightblue', 3, 'index.html?a=b')">up</button><br/><br/>
-    <!--<button onclick="slide('left', 'red', 1, 'index.html?x=y')">left, file</button>&nbsp;&nbsp;&nbsp;&nbsp;-->
-    <button ontouchend="slide('right', 'red', 3, '#right')">prev</button>&nbsp;&nbsp;&nbsp;&nbsp;
-    <button ontouchend="slide('left', 'orange', 3, 'standalone.html?x=y')">next</button><br/><br/>
-    <button ontouchend="slide('down', 'green', 3)">down</button><br/><br/><br/><br/>
+    <button onclick="slide('up', 'lightblue', 1, 'index.html')">up</button><br/><br/>
+                                                                            <!--<button onclick="slide('left', 'red', 1, 'index.html?x=y')">left, file</button>&nbsp;&nbsp;&nbsp;&nbsp;-->
+    <button onclick="slide('right', 'red', 1, '#grr')">back</button>&nbsp;&nbsp;&nbsp;&nbsp;
+    <button onclick="slide('left', 'orange', 1, '#sjaak?x=1')">fwd</button><br/><br/>
+    <button onclick="slide('down', 'green', 1, '#oliebol')">down</button><br/>
+
 
     <h2>Flip</h2>
-    <button ontouchend="flip('up', 'green')">up</button><br/><br/>
-    <button ontouchend="flip('left', 'red')">left</button>&nbsp;&nbsp;&nbsp;&nbsp;
-    <button ontouchend="flip('right', 'orange')">right</button><br/><br/><br/>
-    <button ontouchend="flip('down', 'lightblue')">down</button><br/><br/><br/>
+    <button onclick="flip('up')">up</button><br/><br/>
+    <button onclick="flip('left', 'red')">left</button>&nbsp;&nbsp;&nbsp;&nbsp;
+    <button onclick="flip('right', 'green')">right</button><br/><br/>
+    <button onclick="flip('down')">down</button><br/><br/>
 
-    Demos (requires internet):<br/>
-    <button ontouchend="document.location = 'kendouidemo.html'">KendoUI</button>&nbsp;&nbsp;&nbsp;&nbsp;
-    <button ontouchend="document.location = 'jqmdemo.html'">JQM</button>
+                                                                            HTML5 fwk slide demo's:<br/>
+    <button onclick="document.location = 'kendouidemo.html'">KendoUI</button>&nbsp;&nbsp;&nbsp;&nbsp;
+    <button onclick="document.location = 'jqmdemo.html'">JQM</button>
+    <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+    <br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+
+                                                                            <!--<button onclick="slide(null, 'blue')">default direction</button>-->
 
   </div>
 </div>
@@ -44,25 +57,16 @@
 <script type="text/javascript">
   app.initialize();
 
-  //  window.addEventListener("load", function(){alert('load 1')}, false);
-
-  // demo for hooking the Android backbutton to the slide 'right'
-  document.addEventListener('backbutton', function() {
-    slide('right', 'purple');
-  }, false);
-
   function flip(direction, color, href) {
-
     setTimeout(function () {
       // update the page inside this timeout
       document.querySelector("#title").innerHTML = direction;
       document.querySelector("html").style.background = color;
-    }, 20);
-
-    // TODO test href
-    window.plugins.pagetransitions.flip({
+    }, 10);
+    window.plugins.nativepagetransitions.flip({
           'direction': direction,
-          'duration': 350,
+          'duration': 7000,
+          'iosdelay': 20,
           'href': href
         },
         function () {
@@ -73,8 +77,16 @@
         });
   }
 
-  function slide(direction, color, slowdownfactor, href) {
-    if (!href) {
+
+  // demo for hooking the Android backbutton to the slide 'right'
+  document.addEventListener('backbutton', function() {
+    slide('right', 'purple');
+  }, false);
+
+
+
+  function slide(direction, color, slowdownfactor, hrf) {
+    if (!hrf) {
       setTimeout(function () {
         // update the page inside this timeout
         document.querySelector("#title").innerHTML = direction;
@@ -82,15 +94,32 @@
       }, 20);
     }
     // not passing in options makes the plugin fall back to the defaults defined in the JS API
-    window.plugins.pagetransitions.slide({
-          'direction': direction,
+    var theOptions = {
+      'direction': direction,
+      'duration': 2000,
+      'slowdownfactor' : slowdownfactor,
+      'href': hrf
+    };
+    window.plugins.nativepagetransitions.slide(
+        theOptions,
+        function () {
+          console.log('------------------- slide transition finished');
+        },
+        function (msg) {
+          alert('error: ' + msg);
+        });
+  }
+
+  function drawer(action, origin, color, href) {
+    // not passing in options makes the plugin fall back to the defaults defined in the JS API
+    window.plugins.nativepagetransitions.drawer({
+          'action': action,
+          'origin': origin,
           'duration': 350,
-//          'androiddelay': 50,
-          'slowdownfactor' : slowdownfactor,
           'href': href
         },
         function () {
-          console.log('------------------- slide transition finished');
+          console.log('------------------- drawer transition finished');
         },
         function (msg) {
           alert('error: ' + msg);
