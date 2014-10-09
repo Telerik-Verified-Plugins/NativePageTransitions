@@ -7,6 +7,9 @@
  * If no direction is set, a default is used: data-transition="slide".
  * Slide default: left, Flip default: right.
  *
+ * You should not define default transitions when creating your Kendo App, so:
+ * new kendo.mobile.Application(document.body, {transition: 'slide'}); // don't do this
+ * new kendo.mobile.Application(document.body); // but do this instead
  *
  * Prevent anchors (<a> tags) from being auto-enhanced by adding:
  * data-transition-native="false" to the tag.
@@ -16,11 +19,25 @@
  *
  * TODO: add data- attributes for things like duration and slowdownfactor
  * TODO: auto-enhance drawers based on data-rel="drawer" & data-align="right"
+ * TODO: add support for remote views
  */
 
 (function() {
 
   "use strict";
+
+  var previousPageHrefStack = [];
+  var transitionStack = [];
+  var observerAdded = false;
+
+  window.addEventListener('hashchange', function(hashchangeevent) {
+    var href = hashchangeevent.oldURL.substr(hashchangeevent.oldURL.indexOf('www/')+4);
+    previousPageHrefStack.push(href);
+    // the dom needs to update before the backbutton can be enhanced
+    setTimeout(function() {
+      window.NativePageTransitionsKendoAdapter.enhanceBackbuttons();
+    }, 30);
+  });
 
   var NativePageTransitionsKendoAdapter = function() {
     window.NativePageTransitionsKendoAdapter = this;
@@ -28,8 +45,46 @@
 
   NativePageTransitionsKendoAdapter.prototype = {
 
+    enhanceBackbuttons : function() {
+      // find all views..
+      var backbuttonViews = document.querySelectorAll('div[data-role="view"]');
+      for (var i = 0; i < backbuttonViews.length; i++) {
+        var backbuttonView = backbuttonViews[i];
+        // find the view which is currently showing (not hidden)
+        if (backbuttonView.style.display != "none") {
+          var backbuttons = backbuttonView.querySelectorAll('a[data-role="backbutton"]');
+          for (var j = 0; j < backbuttons.length; j++) {
+            var backbutton = backbuttons[j];
+            if (backbutton.getAttribute("data-transition-native") !== "false") {
+              var href = previousPageHrefStack.pop() || "index.html";
+              var transition = transitionStack.pop() || "slide:right";
+              if ("flip" == transition) {
+                this._addFlipEvent(backbutton, transition, href, 50, 50);
+              } else {
+                this._addSlideEvent(backbutton, transition, href, 50, 50);
+              }
+              backbutton.removeAttribute("href"); // note that this removes the link style
+              backbutton.removeAttribute("data-transition");
+            }
+          }
+          return false; // found the right view, so break the loop
+        }
+      }
+    },
+
     apply : function () {
       if (this._checkPluginLoaded()) {
+
+        if (!observerAdded) {
+          observerAdded = true;
+          observer.observe(document, {
+            childList: true,
+            subtree: true,
+            attributes: false
+          });
+        }
+
+        // enhance <a data-transition=""> tags
         var transAnchors = document.querySelectorAll("a[data-transition]");
         for (var i = 0; i < transAnchors.length; i++) {
           var transAnchor = transAnchors[i];
@@ -54,7 +109,7 @@
                 // unsupported transition for now, so leave it be
                 continue;
               }
-              transAnchor.removeAttribute("href"); // note that this removes the link style
+              transAnchor.removeAttribute("href");
               transAnchor.removeAttribute("data-transition");
             }
           }
@@ -82,6 +137,7 @@
 
     slide : function (direction, href, androiddelay, iosdelay) {
       event.preventDefault();
+      transitionStack.push("slide:" + (direction == 'left' ? 'right' : 'left'));
       window.plugins.nativepagetransitions.slide({
             'direction': direction,
             'androiddelay': androiddelay,
@@ -98,6 +154,7 @@
 
     flip : function (direction, href, androiddelay, iosdelay) {
       event.preventDefault();
+      transitionStack.push("flip:" + (direction == 'right' ? 'left' : 'right'));
       window.plugins.nativepagetransitions.flip({
             'direction': direction,
             'androiddelay': androiddelay,
@@ -121,6 +178,17 @@
       }
     }
   };
+
+  // observe mutations to the Dom so dynamic views can be enhanced
+  var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+  var observer = new MutationObserver(function(mutations, observer) {
+    if (mutations[0].addedNodes.length || mutations[0].removedNodes.length) {
+      console.log("Observed DOM change, so applying native transitions adapter");
+      setTimeout(function () {
+        window.NativePageTransitionsKendoAdapter.apply();
+      }, 10);
+    }
+  });
 
   // wait for cordova (and its plugins) to be ready
   document.addEventListener(
