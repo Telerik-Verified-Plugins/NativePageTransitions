@@ -66,9 +66,9 @@
     },
 
     apply : function () {
-      if (this._checkPluginLoaded()) {
+      if (this._checkPluginLoaded() && window.kendo.mobile.application) {
 
-        if (defaultTransition == null && window.kendo.mobile.application) {
+        if (defaultTransition == null) {
           // figure out the default transition and use that as our default
           defaultTransition = window.kendo.mobile.application.options.transition;
           if (defaultTransition == "") {
