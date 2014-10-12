@@ -7,9 +7,8 @@
  * If no direction is set, a default is used: data-transition="slide".
  * Slide default: left, Flip default: right.
  *
- * You should not define default transitions when creating your Kendo App, so:
- * new kendo.mobile.Application(document.body, {transition: 'slide'}); // don't do this
- * new kendo.mobile.Application(document.body); // but do this instead
+ * If you specify a default transitions, we will use that as the default as expected:
+ * new kendo.mobile.Application(document.body, {transition: 'slide'});
  *
  * Prevent anchors (<a> tags) from being auto-enhanced by adding:
  * data-transition-native="false" to the tag.
@@ -26,17 +25,14 @@
 
   "use strict";
 
-  var previousPageHrefStack = [];
   var transitionStack = [];
-  var observerAdded = false;
+  var defaultTransition = null;
 
   window.addEventListener('hashchange', function(hashchangeevent) {
-    var href = hashchangeevent.oldURL.substr(hashchangeevent.oldURL.indexOf('www/')+4);
-    previousPageHrefStack.push(href);
-    // the dom needs to update before the backbutton can be enhanced
+    // timeout because the dom needs to update before the backbutton can be enhanced
     setTimeout(function() {
       window.NativePageTransitionsKendoAdapter.enhanceBackbuttons();
-    }, 30);
+    }, 100);
   });
 
   var NativePageTransitionsKendoAdapter = function() {
@@ -56,15 +52,12 @@
           for (var j = 0; j < backbuttons.length; j++) {
             var backbutton = backbuttons[j];
             if (backbutton.getAttribute("data-transition-native") !== "false") {
-              var href = previousPageHrefStack.pop() || "index.html";
               var transition = transitionStack.pop() || "slide:right";
-              if ("flip" == transition) {
-                this._addFlipEvent(backbutton, transition, href, 50, 50);
+              if (transition.indexOf("flip") > -1) {
+                backbutton.setAttribute("ontouchend", 'event.preventDefault(); setTimeout(function(){window.kendo.mobile.application.pane.navigate("#:back")},20); window.NativePageTransitionsKendoAdapter.flip(\'right\', null, \'' + 100 + '\', \'' + 100 + '\')');
               } else {
-                this._addSlideEvent(backbutton, transition, href, 50, 50);
+                backbutton.setAttribute("ontouchend", 'event.preventDefault(); setTimeout(function(){window.kendo.mobile.application.pane.navigate("#:back")},20); window.NativePageTransitionsKendoAdapter.slide(\'right\', null, \'' + 140 + '\', \'' + 140 + '\')');
               }
-              backbutton.removeAttribute("href"); // note that this removes the link style
-              backbutton.removeAttribute("data-transition");
             }
           }
           return false; // found the right view, so break the loop
@@ -75,17 +68,32 @@
     apply : function () {
       if (this._checkPluginLoaded()) {
 
-        if (!observerAdded) {
-          observerAdded = true;
-          observer.observe(document, {
-            childList: true,
-            subtree: true,
-            attributes: false
-          });
+        if (defaultTransition == null && window.kendo.mobile.application) {
+          // figure out the default transition and use that as our default
+          defaultTransition = window.kendo.mobile.application.options.transition;
+          if (defaultTransition == "") {
+            defaultTransition = "none";
+          }
+          // make sure the Kendo transitions don't interfere with ours by disabling them
+          window.kendo.effects.enabled = false;
         }
 
-        // enhance <a data-transition=""> tags
-        var transAnchors = document.querySelectorAll("a[data-transition]");
+        // enhance <a> tags
+        var transAnchors;
+        if (defaultTransition == "none") {
+          // if there is no default, we only need to enhance the specific tags
+          transAnchors = document.querySelectorAll("a[data-transition]");
+        } else {
+          // if there is a default, enhance all tags (except backbuttons), and honor the specific overrides if they exist
+          transAnchors = document.querySelectorAll('a[href]:not([data-role="backbutton"])');
+          // add a data-transition attribute to all anchors without one, so the processing below is uniform
+          for (var t = 0; t < transAnchors.length; t++) {
+            var theAnchor = transAnchors[t];
+            if (!theAnchor.hasAttribute("data-transition")) {
+              theAnchor.setAttribute("data-transition", defaultTransition);
+            }
+          }
+        }
         for (var i = 0; i < transAnchors.length; i++) {
           var transAnchor = transAnchors[i];
           if (transAnchor.getAttribute("data-transition-native") !== "false") {
@@ -109,6 +117,7 @@
                 // unsupported transition for now, so leave it be
                 continue;
               }
+              // removing these will prevent these element to be processed again in this lifecycle
               transAnchor.removeAttribute("href");
               transAnchor.removeAttribute("data-transition");
             }
@@ -123,7 +132,7 @@
         direction = transition.substring(6);
       }
       // note: for WinPhone we should not use ontouchend
-      transAnchor.setAttribute("ontouchend", 'window.NativePageTransitionsKendoAdapter.slide(\'' + direction + '\', \'' + href + '\', \'' + androiddelay + '\', \'' + iosdelay + '\')');
+      transAnchor.setAttribute("onclick", 'window.NativePageTransitionsKendoAdapter.slide(\'' + direction + '\', \'' + href + '\', \'' + androiddelay + '\', \'' + iosdelay + '\')');
     },
 
     _addFlipEvent : function (transAnchor, transition, href, androiddelay, iosdelay) {
@@ -132,7 +141,7 @@
         direction = transition.substring(5);
       }
       // note: for WinPhone we should not use ontouchend
-      transAnchor.setAttribute("ontouchend", 'window.NativePageTransitionsKendoAdapter.flip(\'' + direction + '\', \'' + href + '\', \'' + androiddelay + '\', \'' + iosdelay + '\')');
+      transAnchor.setAttribute("onclick", 'window.NativePageTransitionsKendoAdapter.flip(\'' + direction + '\', \'' + href + '\', \'' + androiddelay + '\', \'' + iosdelay + '\')');
     },
 
     slide : function (direction, href, androiddelay, iosdelay) {
@@ -179,20 +188,28 @@
     }
   };
 
-  // observe mutations to the Dom so dynamic views can be enhanced
-  var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
-  var observer = new MutationObserver(function(mutations, observer) {
-    if (mutations[0].addedNodes.length || mutations[0].removedNodes.length) {
-      console.log("Observed DOM change, so applying native transitions adapter");
-      setTimeout(function () {
-        window.NativePageTransitionsKendoAdapter.apply();
-      }, 10);
-    }
-  });
-
   // wait for cordova (and its plugins) to be ready
   document.addEventListener(
       "deviceready",
-      function(){new NativePageTransitionsKendoAdapter().apply()},
+      function() {
+        new NativePageTransitionsKendoAdapter().apply();
+
+        // listen for elements with a-tags added to the dom
+        var dispatchIndex = 0;
+        document.body.addEventListener("DOMNodeInserted", function() {
+          var target = event.relatedNode;
+          var addedAnchors = target.getElementsByTagName("a");
+          if (addedAnchors.length > 0) {
+            var thisIndex = ++dispatchIndex;
+            setTimeout(function () {
+              // enhance the anchors if there is no newer pending event within this timeout
+              if (dispatchIndex == thisIndex) {
+                window.NativePageTransitionsKendoAdapter.apply();
+                console.log("--------- enhancing for index: " + thisIndex);
+              }
+            }, 20);
+          }
+        }, true);
+      },
       false);
 })();

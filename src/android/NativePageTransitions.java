@@ -83,7 +83,7 @@ public class NativePageTransitions extends CordovaPlugin {
     final String href = json.isNull("href") ? null : json.getString("href");
 
     // check whether or not the file exists
-    if (href != null) {
+    if (href != null && !"null".equals(href)) {
       if (href.contains(".html")) {
         String localFile = href;
         if (!href.endsWith(".html")) {
@@ -123,7 +123,7 @@ public class NativePageTransitions extends CordovaPlugin {
           imageView.setImageBitmap(bitmap);
           bringToFront(imageView);
 
-          if (href != null) {
+          if (href != null && !"null".equals(href)) {
             if (href.contains(".html")) {
               webView.loadUrlIntoView("file:///android_asset/www/" + href, false);
             } else {
@@ -158,7 +158,7 @@ public class NativePageTransitions extends CordovaPlugin {
           webView.setDrawingCacheEnabled(false);
           imageView.setImageBitmap(bitmap);
 
-          if (href != null) {
+          if (href != null && !"null".equals(href)) {
             if (href.contains(".html")) {
               webView.loadUrlIntoView("file:///android_asset/www/" + href, false);
             } else {
