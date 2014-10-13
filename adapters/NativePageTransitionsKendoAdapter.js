@@ -84,8 +84,8 @@
           // if there is no default, we only need to enhance the specific tags
           transAnchors = document.querySelectorAll("a[data-transition]");
         } else {
-          // if there is a default, enhance all tags (except backbuttons), and honor the specific overrides if they exist
-          transAnchors = document.querySelectorAll('a[href]:not([data-role="backbutton"])');
+          // if there is a default, enhance all tags (except backbuttons and data-rel's (like modalview)), and honor the specific overrides if they exist
+          transAnchors = document.querySelectorAll('a[href]:not([data-role="backbutton"]):not([data-rel])');
           // add a data-transition attribute to all anchors without one, so the processing below is uniform
           for (var t = 0; t < transAnchors.length; t++) {
             var theAnchor = transAnchors[t];
