@@ -1,6 +1,13 @@
 function NativePageTransitions() {
 }
 
+NativePageTransitions.prototype.globalOptions =  {
+  duration: 400,
+  iosdelay: 60,
+  androiddelay: 70,
+  slowdownfactor: 4
+};
+
 NativePageTransitions.prototype.slide = function (options, onSuccess, onError) {
   var opts = options || {};
   if (!this._validateHref(opts.href, onError)) {
@@ -8,16 +15,16 @@ NativePageTransitions.prototype.slide = function (options, onSuccess, onError) {
   }
   opts.direction = opts.direction || "left";
   if (opts.duration == undefined || opts.duration == "null") {
-    opts.duration = 400;
+    opts.duration = this.globalOptions.duration;
   }
   if (opts.androiddelay == undefined || opts.androiddelay == "null") {
-    opts.androiddelay = 50;
+    opts.androiddelay = this.globalOptions.androiddelay;
   }
   if (opts.iosdelay == undefined || opts.iosdelay == "null") {
-    opts.iosdelay = 50;
+    opts.iosdelay = this.globalOptions.iosdelay;
   }
   // setting slowdownfactor > 1 makes the next page slide less pixels. Use 1 for side-by-side.
-  opts.slowdownfactor = opts.slowdownfactor || 3;
+  opts.slowdownfactor = opts.slowdownfactor || this.globalOptions.slowdownfactor;
   cordova.exec(onSuccess, onError, "NativePageTransitions", "slide", [opts]);
 };
 
@@ -29,13 +36,13 @@ NativePageTransitions.prototype.drawer = function (options, onSuccess, onError) 
   opts.origin = opts.origin || "left";
   opts.action = opts.action || "open";
   if (opts.duration == undefined || opts.duration == "null") {
-    opts.duration = 400;
+    opts.duration = this.globalOptions.duration;
   }
   if (opts.androiddelay == undefined || opts.androiddelay == "null") {
-    opts.androiddelay = 50;
+    opts.androiddelay = this.globalOptions.androiddelay;
   }
   if (opts.iosdelay == undefined || opts.iosdelay == "null") {
-    opts.iosdelay = 50;
+    opts.iosdelay = this.globalOptions.iosdelay;
   }
   cordova.exec(onSuccess, onError, "NativePageTransitions", "drawer", [opts]);
 };
@@ -47,13 +54,13 @@ NativePageTransitions.prototype.flip = function (options, onSuccess, onError) {
   }
   opts.direction = opts.direction || "right";
   if (opts.duration == undefined || opts.duration == "null") {
-    opts.duration = 400;
+    opts.duration = this.globalOptions.duration;
   }
   if (opts.androiddelay == undefined || opts.androiddelay == "null") {
-    opts.androiddelay = 50;
+    opts.androiddelay = this.globalOptions.androiddelay;
   }
   if (opts.iosdelay == undefined || opts.iosdelay == "null") {
-    opts.iosdelay = 50;
+    opts.iosdelay = this.globalOptions.iosdelay;
   }
   cordova.exec(onSuccess, onError, "NativePageTransitions", "flip", [opts]);
 };
