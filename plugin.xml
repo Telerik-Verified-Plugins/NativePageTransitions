@@ -43,4 +43,14 @@
 		<source-file src="src/android/lib/FlipAnimation.java" target-dir="src/com/telerik/plugins/nativepagetransitions/lib"/>
 		<source-file src="src/android/lib/AnimationFactory.java" target-dir="src/com/telerik/plugins/nativepagetransitions/lib"/>
 	</platform>
+
+  <!-- windows phone -->
+  <platform name="wp8">
+    <config-file target="config.xml" parent="/*">
+      <feature name="NativePageTransitions">
+        <param name="wp-package" value="NativePageTransitions"/>
+      </feature>
+    </config-file>
+    <source-file src="src/winphone/NativePageTransitions.cs" />
+  </platform>
 </plugin>
