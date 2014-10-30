@@ -314,7 +314,7 @@
 
 - (BOOL) loadHrefIfPassed:(NSString*) href {
   if (href != [NSNull null]) {
-    if ([href rangeOfString:@".html"].location != NSNotFound) {
+    if (![href hasPrefix:@"#"] && [href rangeOfString:@".html"].location != NSNotFound) {
       // strip any params when looking for the file on the filesystem
       NSString *bareFileName = href;
       NSString *urlParams = nil;
