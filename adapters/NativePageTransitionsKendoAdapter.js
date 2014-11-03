@@ -103,10 +103,10 @@
             if (transition != null && transition != "none") {
               var href = transAnchor.getAttribute("href");
 
-              // Kendo remote view support (work in progress, call the plugin directly for now, without a href param)
-              // if (href.indexOf("#")==-1 && href.indexOf(".") > -1) {
-              //   href = "#" + href.substr(0, href.indexOf("."));
-              // }
+              // Kendo remote view support
+              if (href.indexOf("#")==-1 && href.indexOf(".") > -1) {
+                href = "#" + href;
+              }
 
               var androiddelay = transAnchor.getAttribute("data-transition-native-androiddelay");
               var iosdelay = transAnchor.getAttribute("data-transition-native-iosdelay");

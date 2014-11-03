@@ -84,7 +84,7 @@ public class NativePageTransitions extends CordovaPlugin {
 
     // check whether or not the file exists
     if (href != null && !"null".equals(href)) {
-      if (href.contains(".html")) {
+      if (!href.startsWith("#") && href.contains(".html")) {
         String localFile = href;
         if (!href.endsWith(".html")) {
           localFile = href.substring(0, href.indexOf(".html") + 5);
