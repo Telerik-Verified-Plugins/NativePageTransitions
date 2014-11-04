@@ -124,7 +124,7 @@ public class NativePageTransitions extends CordovaPlugin {
           bringToFront(imageView);
 
           if (href != null && !"null".equals(href)) {
-            if (href.contains(".html")) {
+            if (!href.startsWith("#") && href.contains(".html")) {
               webView.loadUrlIntoView("file:///android_asset/www/" + href, false);
             } else {
               // it's a #hash
@@ -159,7 +159,7 @@ public class NativePageTransitions extends CordovaPlugin {
           imageView.setImageBitmap(bitmap);
 
           if (href != null && !"null".equals(href)) {
-            if (href.contains(".html")) {
+            if (!href.startsWith("#") && href.contains(".html")) {
               webView.loadUrlIntoView("file:///android_asset/www/" + href, false);
             } else {
               // it's a #hash
