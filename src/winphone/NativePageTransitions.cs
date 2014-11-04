@@ -197,7 +197,7 @@ namespace Cordova.Extension.Commands
                 int direction = 1;
                 DependencyProperty property = PlaneProjection.RotationYProperty;
 
-                if (transitionOptions.direction == "left")
+                if (transitionOptions.direction == "right")
                 {
                     direction = -1;
                 }
