@@ -59,7 +59,7 @@ namespace Cordova.Extension.Commands
                 return;
             }
 
-            
+
             Deployment.Current.Dispatcher.BeginInvoke(() =>
             {
                 CordovaView cView = getCordovaView();
@@ -75,8 +75,6 @@ namespace Cordova.Extension.Commands
 
                 img2 = new Image();
                 img2.Source = bmp;
-
-                // TODO wrap this animation stuff in a timeout (based on the winphonedelay)
 
                 // image animation
                 img2.RenderTransform = new TranslateTransform();
@@ -125,7 +123,6 @@ namespace Cordova.Extension.Commands
 
 
                 // now load the new content
-                // TODO.. not overlayed yet..
                 if (transitionOptions.href != null && transitionOptions.href != "" && transitionOptions.href != "null")
                 {
                     String to = transitionOptions.href;
@@ -133,7 +130,9 @@ namespace Cordova.Extension.Commands
                     {
                         to = "index.html" + to;
                     }
-                    browser.Navigate(new Uri("www/" + to, UriKind.Relative));
+                    browser.Navigate(new Uri("www/" + to, UriKind.RelativeOrAbsolute));
+                    // TODO we could wait animating until this is complete:
+                    // browser.LoadCompleted = ..
                 }
 
                 Storyboard.SetTarget(imgAnimation, img2);
@@ -148,97 +147,133 @@ namespace Cordova.Extension.Commands
                 Storyboard.SetTarget(webviewAnimation, browser);
                 Storyboard.SetTargetProperty(webviewAnimation, new PropertyPath("(UIElement.RenderTransform).(TranslateTransform." + animationAxis + ")"));
 
-                
+
                 Storyboard storyboard = new Storyboard();
-                storyboard.Completed += animationCompleted;
+                storyboard.Completed += slideAnimationCompleted;
                 storyboard.Children.Add(imgAnimation);
                 storyboard.Children.Add(webviewAnimation);
 
-                this.Perform(delegate() {
-                    // move the image below the webview if required
-                    // TODO can't we update the z-index?
-                    //if (imgOrdering == 0)
-                    //{
-                       // cView.LayoutRoot.Children.Insert(imgOrdering, img2);
-                       cView.LayoutRoot.Children.Remove(img);
-                    //}
+                this.Perform(delegate()
+                {
+                    cView.LayoutRoot.Children.Remove(img);
                     storyboard.Begin();
                 }, transitionOptions.winphonedelay);
+            });
+        }
 
-                
-                // TODO cleanup cView.LayoutRoot.Children.Add(img) via storyboard.Completed;
 
-                /*
-                DoubleAnimation myDoubleAnimation = new DoubleAnimation();
-                myDoubleAnimation.From = 100;
-                myDoubleAnimation.To = 300;
-                myDoubleAnimation.Duration = new Duration(TimeSpan.FromMilliseconds(2000));
-
-                // Configure the animation to target the button's Width property.
-                Storyboard.SetTarget(myDoubleAnimation, img); //cView.LayoutRoot);
-                Storyboard.SetTargetProperty(myDoubleAnimation, new PropertyPath("(UIElement.RenderTransform).(TranslateTransform.X)"));// new PropertyPath(ListBoxItem.FlowDirectionProperty));
-
-                // Create a storyboard to contain the animation.
-                Storyboard myHeightAnimatedButtonStoryboard = new Storyboard();
-                myHeightAnimatedButtonStoryboard.Children.Add(myDoubleAnimation);
-                myHeightAnimatedButtonStoryboard.Begin();
-                */
-
-        // this works fine for navigation.. and there is a browser.loadinfinished event I thing
-//        browser.Source = new Uri("http://www.nu.nl");
-        //bmp.Render(lbxDays, new TranslateTransform());
-        /*
-        using (var ms = new MemoryStream())
+        public void flip(string options)
         {
-            bmp.SaveJpeg(ms, width, height, 0, 100);
-            ms.Seek(0, System.IO.SeekOrigin.Begin);
-            var lib = new MediaLibrary();
-            var dateStr = DateTime.Now.Ticks;
-            var picture = lib.SavePicture(string.Format("screenshot" + dateStr + ".jpg"), ms);
-            var task = new ShareMediaTask();
-            //task.FilePath = picture.GetPath();
-            //task.Show();
+            try
+            {
+                String jsonOptions = JsonHelper.Deserialize<string[]>(options)[0];
+                transitionOptions = JsonHelper.Deserialize<TransitionOptions>(jsonOptions);
+            }
+            catch (Exception)
+            {
+                DispatchCommandResult(new PluginResult(PluginResult.Status.JSON_EXCEPTION));
+                return;
+            }
+
+            Deployment.Current.Dispatcher.BeginInvoke(() =>
+            {
+                CordovaView cView = getCordovaView();
+                WebBrowser browser = cView.Browser;
+
+                // grab a screenshot
+                WriteableBitmap bmp = new WriteableBitmap(browser, null);
+
+                img2 = new Image();
+                img2.Source = bmp;
+
+                int direction = 1;
+                DependencyProperty property = PlaneProjection.RotationYProperty;
+
+                if (transitionOptions.direction == "left")
+                {
+                    direction = -1;
+                }
+                else if (transitionOptions.direction == "up")
+                {
+                    property = PlaneProjection.RotationXProperty;
+                    direction = -1;
+                }
+                else if (transitionOptions.direction == "down")
+                {
+                    property = PlaneProjection.RotationXProperty;
+                }
+
+                // Insert the screenshot above the webview (index 1)
+                cView.LayoutRoot.Children.Insert(1, img2);
+
+                // now load the new content
+                if (transitionOptions.href != null && transitionOptions.href != "" && transitionOptions.href != "null")
+                {
+                    String to = transitionOptions.href;
+                    if (transitionOptions.href.StartsWith("#"))
+                    {
+                        to = "index.html" + to;
+                    }
+                    browser.Navigate(new Uri("www/" + to, UriKind.RelativeOrAbsolute));
+                    // TODO we could wait animating until this is complete:
+                    // browser.LoadCompleted = ..
+                }
+
+                TimeSpan duration = TimeSpan.FromMilliseconds(transitionOptions.duration);
+                Storyboard sb = new Storyboard();
+
+                // animation for the screenshot
+                DoubleAnimation imgAnimation = new DoubleAnimation()
+                {
+                    From = 0,
+                    To = direction * 180,
+                    Duration = new Duration(duration),
+                };
+                Storyboard.SetTargetProperty(imgAnimation, new PropertyPath(property));
+                img2.Projection = new PlaneProjection();
+                Storyboard.SetTarget(imgAnimation, img2.Projection);
+                sb.Children.Add(imgAnimation);
+
+                // animation for the webview
+                DoubleAnimation webviewAnimation = new DoubleAnimation()
+                {
+                    From = direction * -180,
+                    To = 0,
+                    Duration = new Duration(duration),
+                };
+                Storyboard.SetTargetProperty(webviewAnimation, new PropertyPath(property));
+                browser.Projection = new PlaneProjection();
+                Storyboard.SetTarget(webviewAnimation, browser.Projection);
+                sb.Children.Add(webviewAnimation);
+
+                // perform the transition after the specified delay
+                this.Perform(delegate()
+                {
+                    // remove the image halfway down the transition so we don't see the back of the image instead of the webview
+                    this.Perform(delegate()
+                    {
+                        Deployment.Current.Dispatcher.BeginInvoke(() =>
+                        {
+                            CordovaView cView2 = getCordovaView();
+                            cView2.LayoutRoot.Children.Remove(img2);
+                        });
+                    }, transitionOptions.duration / 2);
+
+                    sb.Begin();
+                }, transitionOptions.winphonedelay);
+            });
         }
-         * */
-     //   wbmp.SaveJpeg(isoStream2, wbmp.PixelWidth, wbmp.PixelHeight, 0, 100);
-
-//        Bitmap bitmap = new Bitmap(browser.Width, browser.Height);
-//        browser.DrawToBitmap(bitmap, new Rectangle(0, 0, browser.Width, browser.Height));
-});
-
-
-            
-
-            // show the screenshot
-
-            // load the new page in the webview
- 
-            // animate the screenshot offscreen
-        }
-
 
         // clean up resources
-        private void animationCompleted(object sender, EventArgs e)
+        private void slideAnimationCompleted(object sender, EventArgs e)
         {
-            (sender as Storyboard).Completed -= animationCompleted;
+            (sender as Storyboard).Completed -= slideAnimationCompleted;
             Deployment.Current.Dispatcher.BeginInvoke(() =>
             {
                 CordovaView cView = getCordovaView();
                 cView.LayoutRoot.Children.Remove(img2);
             });
         }
-
-        // for the flip animation:
-        /*
-        DoubleAnimation animation = new DoubleAnimation()
-            {
-                From = 0,
-                Duration = TimeSpan.FromSeconds(0.6),
-                To = 90 // 180
-            };
-            Storyboard.SetTarget(animation, SplashProjector);
-            Storyboard.SetTargetProperty(animation, new PropertyPath("RotationY"));
-        */
 
         private CordovaView getCordovaView()
         {

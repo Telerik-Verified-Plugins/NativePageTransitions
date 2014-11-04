@@ -5,7 +5,7 @@ NativePageTransitions.prototype.globalOptions =  {
   duration: 400,
   iosdelay: 60,
   androiddelay: 70,
-  winphonedelay: 70,
+  winphonedelay: 150,
   slowdownfactor: 4
 };
 
@@ -23,6 +23,9 @@ NativePageTransitions.prototype.slide = function (options, onSuccess, onError) {
   }
   if (opts.iosdelay == undefined || opts.iosdelay == "null") {
     opts.iosdelay = this.globalOptions.iosdelay;
+  }
+  if (opts.winphonedelay == undefined || opts.winphonedelay == "null") {
+    opts.winphonedelay = this.globalOptions.winphonedelay;
   }
   // setting slowdownfactor > 1 makes the next page slide less pixels. Use 1 for side-by-side.
   opts.slowdownfactor = opts.slowdownfactor || this.globalOptions.slowdownfactor;
@@ -45,6 +48,9 @@ NativePageTransitions.prototype.drawer = function (options, onSuccess, onError) 
   if (opts.iosdelay == undefined || opts.iosdelay == "null") {
     opts.iosdelay = this.globalOptions.iosdelay;
   }
+  if (opts.winphonedelay == undefined || opts.winphonedelay == "null") {
+    opts.winphonedelay = this.globalOptions.winphonedelay;
+  }
   cordova.exec(onSuccess, onError, "NativePageTransitions", "drawer", [opts]);
 };
 
@@ -62,6 +68,9 @@ NativePageTransitions.prototype.flip = function (options, onSuccess, onError) {
   }
   if (opts.iosdelay == undefined || opts.iosdelay == "null") {
     opts.iosdelay = this.globalOptions.iosdelay;
+  }
+  if (opts.winphonedelay == undefined || opts.winphonedelay == "null") {
+    opts.winphonedelay = this.globalOptions.winphonedelay;
   }
   cordova.exec(onSuccess, onError, "NativePageTransitions", "flip", [opts]);
 };

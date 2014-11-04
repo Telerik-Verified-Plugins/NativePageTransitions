@@ -171,6 +171,7 @@
             'direction': direction,
             'androiddelay': androiddelay,
             'iosdelay': iosdelay,
+//            'winphonedelay': winphonedelay,
             'href': href
           },
           function () {
@@ -188,6 +189,7 @@
             'direction': direction,
             'androiddelay': androiddelay,
             'iosdelay': iosdelay,
+//            'winphonedelay': winphonedelay,
             'href': href
           },
           function () {
