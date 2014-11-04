@@ -14,6 +14,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Navigation;
 using WPCordovaClassLib;
 using Microsoft.Xna.Framework.Media;
 
@@ -126,13 +127,20 @@ namespace Cordova.Extension.Commands
                 if (transitionOptions.href != null && transitionOptions.href != "" && transitionOptions.href != "null")
                 {
                     String to = transitionOptions.href;
+                    Uri currenturi = browser.Source;
+                    string path = currenturi.OriginalString;
                     if (transitionOptions.href.StartsWith("#"))
                     {
-                        to = "index.html" + to;
+
+                        to = path.Substring(2) + to;
                     }
-                    browser.Navigate(new Uri("www/" + to, UriKind.RelativeOrAbsolute));
+                    else
+                    {
+                        to = "www/" + to;
+                    }
+                    browser.Navigate(new Uri(to, UriKind.RelativeOrAbsolute));
                     // TODO we could wait animating until this is complete:
-                    // browser.LoadCompleted = ..
+//                    browser.LoadCompleted += WebBrowser_LoadCompleted;
                 }
 
                 Storyboard.SetTarget(imgAnimation, img2);
@@ -210,13 +218,20 @@ namespace Cordova.Extension.Commands
                 if (transitionOptions.href != null && transitionOptions.href != "" && transitionOptions.href != "null")
                 {
                     String to = transitionOptions.href;
+                    Uri currenturi = browser.Source;
+                    string path = currenturi.OriginalString;
                     if (transitionOptions.href.StartsWith("#"))
                     {
-                        to = "index.html" + to;
+                       
+                        to = path.Substring(2) + to;
                     }
-                    browser.Navigate(new Uri("www/" + to, UriKind.RelativeOrAbsolute));
+                    else
+                    {
+                        to = "www/" + to;
+                    }
+                    browser.Navigate(new Uri(to, UriKind.RelativeOrAbsolute));
                     // TODO we could wait animating until this is complete:
-                    // browser.LoadCompleted = ..
+//                    browser.LoadCompleted += WebBrowser_LoadCompleted;
                 }
 
                 TimeSpan duration = TimeSpan.FromMilliseconds(transitionOptions.duration);
@@ -227,7 +242,7 @@ namespace Cordova.Extension.Commands
                 {
                     From = 0,
                     To = direction * 180,
-                    Duration = new Duration(duration),
+                    Duration = new Duration(duration)
                 };
                 Storyboard.SetTargetProperty(imgAnimation, new PropertyPath(property));
                 img2.Projection = new PlaneProjection();
@@ -239,7 +254,7 @@ namespace Cordova.Extension.Commands
                 {
                     From = direction * -180,
                     To = 0,
-                    Duration = new Duration(duration),
+                    Duration = new Duration(duration)
                 };
                 Storyboard.SetTargetProperty(webviewAnimation, new PropertyPath(property));
                 browser.Projection = new PlaneProjection();
@@ -275,6 +290,11 @@ namespace Cordova.Extension.Commands
             });
         }
 
+//        void WebBrowser_LoadCompleted(object sender, NavigationEventArgs e)
+//        {
+//            int i = 0;
+//        }
+ 
         private CordovaView getCordovaView()
         {
             PhoneApplicationFrame frame = (PhoneApplicationFrame)Application.Current.RootVisual;

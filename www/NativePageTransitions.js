@@ -5,7 +5,7 @@ NativePageTransitions.prototype.globalOptions =  {
   duration: 400,
   iosdelay: 60,
   androiddelay: 70,
-  winphonedelay: 150,
+  winphonedelay: 200,
   slowdownfactor: 4
 };
 
