@@ -256,6 +256,10 @@
         // listen for elements with a-tags added to the dom
         var dispatchIndex = 0;
         document.body.addEventListener("DOMNodeInserted", function() {
+          // TODO no event on wp8
+          if (!event) {
+            return;
+          }
           var target = event.relatedNode;
           var addedAnchors = target.getElementsByTagName("a");
           if (addedAnchors.length > 0) {
