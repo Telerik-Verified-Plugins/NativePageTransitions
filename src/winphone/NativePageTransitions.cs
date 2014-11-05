@@ -23,6 +23,15 @@ namespace Cordova.Extension.Commands
     public class NativePageTransitions : BaseCommand
     {
 
+        public NativePageTransitions()
+        {
+            cView = getCordovaView();
+            browser = cView.Browser;
+            //browser.Navigated += Browser_Navigated;
+            //browser.Navigating += Browser_Navigating;
+            img = new Image();
+        }
+
         [DataContract]
         public class TransitionOptions
         {
@@ -42,8 +51,9 @@ namespace Cordova.Extension.Commands
             public int winphonedelay { get; set; }
         }
 
-        private TransitionOptions transitionOptions = null;
-
+        private CordovaView cView;
+        private WebBrowser browser;
+        private TransitionOptions transitionOptions;
         private Image img;
         private Image img2;
 
@@ -60,18 +70,13 @@ namespace Cordova.Extension.Commands
                 return;
             }
 
-
             Deployment.Current.Dispatcher.BeginInvoke(() =>
             {
-                CordovaView cView = getCordovaView();
-                WebBrowser browser = cView.Browser;
-
                 // grab a screenshot
                 WriteableBitmap bmp = new WriteableBitmap(browser, null);
                 var width = (int)bmp.PixelWidth;
                 var height = (int)bmp.PixelHeight;
 
-                img = new Image();
                 img.Source = bmp;
 
                 img2 = new Image();
@@ -129,18 +134,23 @@ namespace Cordova.Extension.Commands
                     String to = transitionOptions.href;
                     Uri currenturi = browser.Source;
                     string path = currenturi.OriginalString;
-                    if (transitionOptions.href.StartsWith("#"))
+                    if (to.StartsWith("#"))
                     {
-
-                        to = path.Substring(2) + to;
+                        if (path.StartsWith("//"))
+                        {
+                            path = path.Substring(2);
+                        }
+﻿                        if (path.Contains("#"))
+                        {
+                            path = path.Substring(0, path.IndexOf("#"));
+                        }
+                        to = path + to;
                     }
                     else
                     {
                         to = "www/" + to;
                     }
                     browser.Navigate(new Uri(to, UriKind.RelativeOrAbsolute));
-                    // TODO we could wait animating until this is complete:
-//                    browser.LoadCompleted += WebBrowser_LoadCompleted;
                 }
 
                 Storyboard.SetTarget(imgAnimation, img2);
@@ -185,12 +195,9 @@ namespace Cordova.Extension.Commands
 
             Deployment.Current.Dispatcher.BeginInvoke(() =>
             {
-                CordovaView cView = getCordovaView();
-                WebBrowser browser = cView.Browser;
-
                 // grab a screenshot
                 WriteableBitmap bmp = new WriteableBitmap(browser, null);
-
+                
                 img2 = new Image();
                 img2.Source = bmp;
 
@@ -220,18 +227,25 @@ namespace Cordova.Extension.Commands
                     String to = transitionOptions.href;
                     Uri currenturi = browser.Source;
                     string path = currenturi.OriginalString;
-                    if (transitionOptions.href.StartsWith("#"))
+                    if (to.StartsWith("#"))
                     {
-                       
-                        to = path.Substring(2) + to;
+                        if (path.StartsWith("//"))
+                        {
+                            path = path.Substring(2);
+                        }
+﻿                        if (path.Contains("#"))
+                        {
+                            path = path.Substring(0, path.IndexOf("#"));
+                        }
+                        to = path + to;
+                        //Debug.WriteLine("browser will navigate to (a): " + to);
                     }
                     else
                     {
                         to = "www/" + to;
+                        //Debug.WriteLine("browser will navigate to (b): " + to);
                     }
                     browser.Navigate(new Uri(to, UriKind.RelativeOrAbsolute));
-                    // TODO we could wait animating until this is complete:
-//                    browser.LoadCompleted += WebBrowser_LoadCompleted;
                 }
 
                 TimeSpan duration = TimeSpan.FromMilliseconds(transitionOptions.duration);
@@ -290,11 +304,14 @@ namespace Cordova.Extension.Commands
             });
         }
 
-//        void WebBrowser_LoadCompleted(object sender, NavigationEventArgs e)
-//        {
-//            int i = 0;
-//        }
- 
+        void Browser_Navigated(object sender, NavigationEventArgs e)
+        {
+        }
+
+        void Browser_Navigating(object sender, NavigationEventArgs e)
+        {
+        }
+
         private CordovaView getCordovaView()
         {
             PhoneApplicationFrame frame = (PhoneApplicationFrame)Application.Current.RootVisual;

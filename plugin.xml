@@ -49,6 +49,7 @@
     <config-file target="config.xml" parent="/*">
       <feature name="NativePageTransitions">
         <param name="wp-package" value="NativePageTransitions"/>
+        <param name="onload" value="true" />
       </feature>
     </config-file>
     <source-file src="src/winphone/NativePageTransitions.cs" />
