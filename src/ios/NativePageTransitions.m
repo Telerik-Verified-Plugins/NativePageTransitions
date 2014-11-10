@@ -32,17 +32,17 @@
   delay = delay / 1000;
   CGFloat lowerLayerAlpha = 0.4f; // TODO consider passing in
   
-//  CGFloat totalHeight = self.viewController.view.frame.size.height;
+  //  CGFloat totalHeight = self.viewController.view.frame.size.height;
   CGFloat width = self.viewController.view.frame.size.width;
   CGFloat height = self.viewController.view.frame.size.height;
-
+  
   CGFloat transitionToX = 0;
   CGFloat transitionToY = 0;
   CGFloat webviewFromY = _nonWebViewHeight;
   CGFloat webviewToY = _nonWebViewHeight;
   int screenshotSlowdownFactor = 1;
   int webviewSlowdownFactor = 1;
-
+  
   if ([direction isEqualToString:@"left"]) {
     transitionToX = -width;
     screenshotSlowdownFactor = [slowdownfactor intValue];
@@ -59,19 +59,19 @@
     webviewSlowdownFactor = [slowdownfactor intValue];
     webviewFromY = (-height/webviewSlowdownFactor)+_nonWebViewHeight;
   }
-
+  
   CGSize viewSize = self.viewController.view.bounds.size;
-
+  
   UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0);
   [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
-
+  
   // Read the UIImage object
   UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
   UIGraphicsEndImageContext();
-
+  
   _screenShotImageView = [[UIImageView alloc]initWithFrame:[self.viewController.view.window frame]];
   [_screenShotImageView setImage:image];
-
+  
   // in case of a statusbar above the webview, crop off the top
   // TODO this can also be used for not scrolling fixed headers and footers
   if (_nonWebViewHeight > 0 && [direction isEqualToString:@"down"]) {
@@ -84,13 +84,13 @@
     [_screenShotImageView setImage:newImage];
     CGImageRelease(tempImage);
   }
-
+  
   if ([direction isEqualToString:@"left"] || [direction isEqualToString:@"up"]) {
     [UIApplication.sharedApplication.keyWindow.subviews.lastObject insertSubview:_screenShotImageView belowSubview:self.webView];
   } else {
     [UIApplication.sharedApplication.keyWindow.subviews.lastObject insertSubview:_screenShotImageView aboveSubview:self.webView];
   }
-
+  
   if ([self loadHrefIfPassed:href]) {
     [UIView animateWithDuration:duration
                           delay:delay
@@ -103,7 +103,7 @@
                        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
                        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
                      }];
-
+    
     // also, fade out the screenshot a bit to give it some depth
     if ([slowdownfactor intValue] != 1 && ([direction isEqualToString:@"left"] || [direction isEqualToString:@"up"])) {
       [UIView animateWithDuration:duration
@@ -115,9 +115,9 @@
                        completion:^(BOOL finished) {
                        }];
     }
-
+    
     [self.webView setFrame:CGRectMake(-transitionToX/webviewSlowdownFactor, webviewFromY, width, height)];
-
+    
     [UIView animateWithDuration:duration
                           delay:delay
                         options:UIViewAnimationOptionCurveEaseInOut
@@ -126,7 +126,7 @@
                      }
                      completion:^(BOOL finished) {
                      }];
-
+    
     if ([slowdownfactor intValue] != 1 && ([direction isEqualToString:@"right"] || [direction isEqualToString:@"down"])) {
       self.webView.alpha = lowerLayerAlpha;
       [UIView animateWithDuration:duration
@@ -149,18 +149,18 @@
   NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
   NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
   NSString *href = [args objectForKey:@"href"];
-
+  
   // duration/delay is passed in ms, but needs to be in sec here
   duration = duration / 1000;
   delay = delay / 1000;
-
+  
   CGFloat width = self.viewController.view.frame.size.width;
   CGFloat height = self.viewController.view.frame.size.height;
-
+  
   CGFloat transitionToX = 0;
   CGFloat webviewTransitionFromX = 0;
   int screenshotPx = 44;
-
+  
   if ([action isEqualToString:@"open"]) {
     if ([origin isEqualToString:@"right"]) {
       transitionToX = -width+screenshotPx;
@@ -176,15 +176,15 @@
       webviewTransitionFromX = width-screenshotPx;
     }
   }
-
+  
   CGSize viewSize = self.viewController.view.bounds.size;
   UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0);
   [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
-
+  
   // Read the UIImage object
   UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
   UIGraphicsEndImageContext();
-
+  
   [_screenShotImageView setFrame:CGRectMake(0, 0, width, height)];
   if ([action isEqualToString:@"open"]) {
     _screenShotImageView = [[UIImageView alloc]initWithFrame:[self.viewController.view.window frame]];
@@ -208,7 +208,7 @@
     self.webView.layer.shadowOpacity = 0.5f;
     self.webView.layer.shadowPath = shadowPath.CGPath;
   }
-
+  
   if ([self loadHrefIfPassed:href]) {
     if ([action isEqualToString:@"open"]) {
       [UIView animateWithDuration:duration
@@ -226,15 +226,15 @@
                          [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
                        }];
     }
-
+    
     if ([action isEqualToString:@"close"]) {
       [self.webView setFrame:CGRectMake(webviewTransitionFromX, _nonWebViewHeight, width, height)];
-
+      
       // position thw webview above the screenshot just after the animation kicks in so no flash of the webview occurs
       dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay+50 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
         [UIApplication.sharedApplication.keyWindow.subviews.lastObject bringSubviewToFront:self.webView];
       });
-
+      
       [UIView animateWithDuration:duration
                             delay:delay
                           options:UIViewAnimationOptionCurveEaseInOut
@@ -257,28 +257,28 @@
   NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
   NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
   NSString *href = [args objectForKey:@"href"];
-
+  
   // duration is passed in ms, but needs to be in sec here
   duration = duration / 1000;
-
+  
   // overlay the webview with a screenshot to prevent the user from seeing changes in the webview before the flip kicks in
   CGSize viewSize = self.viewController.view.bounds.size;
-
+  
   UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0);
   [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
-
+  
   // Read the UIImage object
   UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
   UIGraphicsEndImageContext();
-
+  
   CGFloat width = self.viewController.view.frame.size.width;
   CGFloat height = self.viewController.view.frame.size.height;
   [_screenShotImageView setFrame:CGRectMake(0, 0, width, height)];
-
+  
   _screenShotImageView = [[UIImageView alloc]initWithFrame:[self.viewController.view.window frame]];
   [_screenShotImageView setImage:image];
   [UIApplication.sharedApplication.keyWindow.subviews.lastObject insertSubview:_screenShotImageView aboveSubview:self.webView];
-
+  
   UIViewAnimationOptions animationOptions;
   if ([direction isEqualToString:@"right"]) {
     animationOptions = UIViewAnimationOptionTransitionFlipFromLeft;
@@ -293,7 +293,7 @@
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     return;
   }
-
+  
   if ([self loadHrefIfPassed:href]) {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
       // remove the screenshot halfway during the transition
@@ -313,7 +313,7 @@
 }
 
 - (BOOL) loadHrefIfPassed:(NSString*) href {
-  if (href != nil) {
+  if (href != nil && href != [NSNull null]) {
     if (![href hasPrefix:@"#"] && [href rangeOfString:@".html"].location != NSNotFound) {
       // strip any params when looking for the file on the filesystem
       NSString *bareFileName = href;
