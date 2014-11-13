@@ -107,8 +107,12 @@
           // add a data-transition attribute to all anchors without one, so the processing below is uniform
           for (var t = 0; t < transAnchors.length; t++) {
             var theAnchor = transAnchors[t];
-            if (!theAnchor.hasAttribute("data-transition")) {
-              theAnchor.setAttribute("data-transition", defaultTransition);
+            // exclude and links with window.open
+            var lowerhref = theAnchor.getAttribute('href').toLowerCase();
+            if (lowerhref.indexOf("window.open") == -1 && lowerhref.indexOf("url.loadurl") == -1) {
+              if (!theAnchor.hasAttribute("data-transition")) {
+                theAnchor.setAttribute("data-transition", defaultTransition);
+              }
             }
           }
         }
