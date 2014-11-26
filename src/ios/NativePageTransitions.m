@@ -230,7 +230,7 @@
     if ([action isEqualToString:@"close"]) {
       [self.webView setFrame:CGRectMake(webviewTransitionFromX, _nonWebViewHeight, width, height)];
       
-      // position thw webview above the screenshot just after the animation kicks in so no flash of the webview occurs
+      // position the webview above the screenshot just after the animation kicks in so no flash of the webview occurs
       dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay+50 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
         [UIApplication.sharedApplication.keyWindow.subviews.lastObject bringSubviewToFront:self.webView];
       });

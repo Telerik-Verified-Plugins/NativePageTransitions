@@ -22,8 +22,11 @@ import java.util.TimerTask;
 public class NativePageTransitions extends CordovaPlugin {
 
   private ImageView imageView;
+  private ImageView imageView2;
   private long duration;
   private long delay;
+  private String drawerAction;
+  private String drawerOrigin;
   private String direction;
   private int slowdownfactor;
   private CallbackContext _callbackContext;
@@ -46,6 +49,8 @@ public class NativePageTransitions extends CordovaPlugin {
         doSlideTransition();
       } else if ("flip".equalsIgnoreCase(_action)) {
         doFlipTransition();
+      } else if ("drawer".equalsIgnoreCase(_action)) {
+        doDrawerTransition();
       }
     }
   }
@@ -57,6 +62,7 @@ public class NativePageTransitions extends CordovaPlugin {
     // TODO may be replaced by a 'load' listener (but that doesnt work for hashnav)
     webView.setWebViewClient(new MyCordovaWebViewClient(cordova, webView));
     imageView = new ImageView(cordova.getActivity().getBaseContext());
+    imageView2 = new ImageView(cordova.getActivity().getBaseContext());
 
     // Transitions are below par when this is switched off in the manifest, so enabling it here.
     // We may need to have developers suppress this via a param in the future.
@@ -72,7 +78,10 @@ public class NativePageTransitions extends CordovaPlugin {
     }
     layout.addView(webView);
     layout.addView(imageView);
+    layout.addView(imageView2);
   }
+
+  int drawerNonOverlappingSpace;
 
   @Override
   public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
@@ -103,7 +112,7 @@ public class NativePageTransitions extends CordovaPlugin {
 
     calledFromJS = true;
 
-    // TODO move effects to separate classes
+    // TODO move effects to separate classes, and reuse a lot of code
     if ("slide".equalsIgnoreCase(action)) {
 
       duration = json.getLong("duration");
@@ -137,6 +146,69 @@ public class NativePageTransitions extends CordovaPlugin {
             }
           } else {
             doSlideTransition();
+          }
+        }
+      });
+
+    } else if ("drawer".equalsIgnoreCase(action)) {
+
+      if (drawerNonOverlappingSpace == 0) {
+        drawerNonOverlappingSpace = webView.getWidth()/8;
+      }
+      duration = json.getLong("duration");
+      drawerAction = json.getString("action");
+      drawerOrigin = json.getString("origin");
+      delay = json.getLong("androiddelay");
+
+      cordova.getActivity().runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+//          if ("close".equals(drawerAction)) {
+//            bringToFront(webView);
+//          }
+
+          webView.setDrawingCacheEnabled(true);
+          Bitmap bitmap;
+          if ("open".equals(drawerAction)) {
+            bitmap = Bitmap.createBitmap(webView.getDrawingCache());
+          } else {
+            bitmap = Bitmap.createBitmap(webView.getDrawingCache(), "left".equals(drawerOrigin) ? 0 : drawerNonOverlappingSpace, 0, webView.getWidth()- drawerNonOverlappingSpace, webView.getHeight());
+            if ("left".equals(drawerOrigin)) {
+              if (Build.VERSION.SDK_INT >= 11) {
+                imageView2.setX(-drawerNonOverlappingSpace / 2);
+              }
+            } else {
+              if (Build.VERSION.SDK_INT >= 11) {
+                imageView2.setX(drawerNonOverlappingSpace / 2);
+              }
+            }
+          }
+          if (Build.VERSION.SDK_INT >= 12) {
+            bitmap.setHasAlpha(false);
+          }
+          webView.setDrawingCacheEnabled(false);
+          if ("open".equals(drawerAction)) {
+            imageView.setImageBitmap(bitmap);
+            bringToFront(imageView);
+          } else {
+            imageView2.setImageBitmap(bitmap);
+            bringToFront(imageView2);
+          }
+
+          if (href != null && !"null".equals(href)) {
+            if (!href.startsWith("#") && href.contains(".html")) {
+              webView.loadUrlIntoView("file:///android_asset/www/" + href, false);
+            } else {
+              // it's a #hash
+              String url = webView.getUrl();
+              // strip any existing hash
+              if (url.contains("#")) {
+                url = url.substring(0, url.indexOf("#"));
+              }
+              webView.loadUrlIntoView(url + href, false);
+            }
+          } else {
+            doDrawerTransition();
           }
         }
       });
@@ -347,6 +419,90 @@ public class NativePageTransitions extends CordovaPlugin {
               // but the transition doesn't kick in unless the screen is touched again.
               imageView.requestFocusFromTouch();
               webView.requestFocus();
+            }
+
+            calledFromJS = false;
+          }
+        });
+      }
+    }, delay);
+  }
+
+  private void doDrawerTransition() {
+    if (!calledFromJS) {
+      return;
+    }
+
+    new Timer().schedule(new TimerTask() {
+      public void run() {
+        // manipulations of the imageView need to be done by the same thread
+        // as the one that created it - the uithread in this case
+        cordova.getActivity().runOnUiThread(new Runnable() {
+          @Override
+          public void run() {
+
+            float width = webView.getWidth();
+            float transitionToX = 0;
+            float transitionFromX = 0;
+
+            if ("open".equals(drawerAction)) {
+              if ("right".equals(drawerOrigin)) {
+                transitionToX = width - drawerNonOverlappingSpace;
+              } else {
+                transitionToX = -width + drawerNonOverlappingSpace;
+              }
+            } else if ("close".equals(drawerAction)) {
+              if ("right".equals(drawerOrigin)) {
+                transitionFromX = -width + drawerNonOverlappingSpace;
+              } else {
+                transitionFromX = width - drawerNonOverlappingSpace;
+              }
+            }
+
+            final Animation animation = new TranslateAnimation(
+                TranslateAnimation.ABSOLUTE, transitionFromX,
+                TranslateAnimation.ABSOLUTE, -transitionToX,
+                TranslateAnimation.ABSOLUTE, 0,
+                TranslateAnimation.ABSOLUTE, 0);
+
+            animation.setDuration(duration);
+
+            animation.setAnimationListener(new Animation.AnimationListener() {
+              @Override
+              public void onAnimationStart(Animation animation) {
+              }
+
+              @Override
+              public void onAnimationEnd(Animation animation) {
+                if ("close".equals(drawerAction)) {
+                  imageView.setImageBitmap(null);
+                  imageView2.setImageBitmap(null);
+                }
+                _callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
+              }
+
+              @Override
+              public void onAnimationRepeat(Animation animation) {
+              }
+            });
+
+            if ("open".equals(drawerAction)) {
+              animation.setFillAfter(true); // persists the screenshot
+              imageView.startAnimation(animation);
+            } else {
+              // prevent a flash by moving the webview to the front with a little delay
+              new Timer().schedule(new TimerTask() {
+                public void run() {
+                  cordova.getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                      bringToFront(webView);
+                    }
+                  });
+                }
+              }, 80);
+              webView.setAnimation(animation);
+              layout.startLayoutAnimation();
             }
 
             calledFromJS = false;
