@@ -347,6 +347,11 @@
     } else {
       // it's a hash, so load the url without any possible current hash
       NSString *url = self.webView.request.URL.absoluteString;
+      // remove the # if it's still there
+      if ([url rangeOfString:@"#"].location != NSNotFound) {
+        NSRange range = [url rangeOfString:@"#"];
+        url = [url substringToIndex:range.location];
+      }
       // attach the hash
       url = [url stringByAppendingString:href];
       // and load it
