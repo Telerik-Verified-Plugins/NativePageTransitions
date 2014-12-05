@@ -8,10 +8,8 @@
 - (CDVPlugin*) initWithWebView:(UIWebView*)theWebView {
   self = [super initWithWebView:theWebView];
   CGRect screenBound = [[UIScreen mainScreen] bounds];
-  _width = screenBound.size.width;
-  _height = screenBound.size.height;
   // webview height may differ from screen height because of a statusbar
-  _nonWebViewHeight = (_height - self.webView.frame.size.height);
+  _nonWebViewHeight = screenBound.size.width-self.webView.frame.size.width + screenBound.size.height-self.webView.frame.size.height;
   return self;
 }
 
@@ -35,7 +33,19 @@
   //  CGFloat totalHeight = self.viewController.view.frame.size.height;
   CGFloat width = self.viewController.view.frame.size.width;
   CGFloat height = self.viewController.view.frame.size.height;
-  
+  CGRect screenshotRect = [self.viewController.view.window frame];
+
+  // correct landscape detection on iOS < 8
+#if __IPHONE_OS_VERSION_MAX_ALLOWED < 80000
+  BOOL isLandscape = UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
+  if (isLandscape) {
+    screenshotRect = CGRectMake(screenshotRect.origin.x, screenshotRect.origin.y, screenshotRect.size.height, screenshotRect.size.width);
+    CGFloat temp = width;
+    width = height;
+    height = temp;
+  }
+#endif
+
   CGFloat transitionToX = 0;
   CGFloat transitionToY = 0;
   CGFloat webviewFromY = _nonWebViewHeight;
@@ -64,12 +74,12 @@
   
   UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0);
   [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
-  
+
   // Read the UIImage object
   UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
   UIGraphicsEndImageContext();
-  
-  _screenShotImageView = [[UIImageView alloc]initWithFrame:[self.viewController.view.window frame]];
+
+  _screenShotImageView = [[UIImageView alloc]initWithFrame:screenshotRect];
   [_screenShotImageView setImage:image];
   
   // in case of a statusbar above the webview, crop off the top
@@ -156,7 +166,19 @@
   
   CGFloat width = self.viewController.view.frame.size.width;
   CGFloat height = self.viewController.view.frame.size.height;
+  CGRect screenshotRect = [self.viewController.view.window frame];
   
+  // correct landscape detection on iOS < 8
+#if __IPHONE_OS_VERSION_MAX_ALLOWED < 80000
+  BOOL isLandscape = UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
+  if (isLandscape) {
+    screenshotRect = CGRectMake(screenshotRect.origin.x, screenshotRect.origin.y, screenshotRect.size.height, screenshotRect.size.width);
+    CGFloat temp = width;
+    width = height;
+    height = temp;
+  }
+#endif
+
   CGFloat transitionToX = 0;
   CGFloat webviewTransitionFromX = 0;
   int screenshotPx = 44;
@@ -185,9 +207,9 @@
   UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
   UIGraphicsEndImageContext();
   
-  [_screenShotImageView setFrame:CGRectMake(0, 0, width, height)];
+  [_screenShotImageView setFrame:screenshotRect];
   if ([action isEqualToString:@"open"]) {
-    _screenShotImageView = [[UIImageView alloc]initWithFrame:[self.viewController.view.window frame]];
+    _screenShotImageView = [[UIImageView alloc]initWithFrame:screenshotRect];
     // add a cool shadow
     UIBezierPath *shadowPath = [UIBezierPath bezierPathWithRect:_screenShotImageView.bounds];
     _screenShotImageView.layer.masksToBounds = NO;
@@ -282,12 +304,32 @@
   UIViewAnimationOptions animationOptions;
   if ([direction isEqualToString:@"right"]) {
     animationOptions = UIViewAnimationOptionTransitionFlipFromLeft;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED < 80000
+    if (UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)) {
+      animationOptions = UIViewAnimationOptionTransitionFlipFromTop;
+    }
+#endif
   } else if ([direction isEqualToString:@"left"]) {
     animationOptions = UIViewAnimationOptionTransitionFlipFromRight;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED < 80000
+    if (UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)) {
+      animationOptions = UIViewAnimationOptionTransitionFlipFromBottom;
+    }
+#endif
   } else if ([direction isEqualToString:@"up"]) {
     animationOptions = UIViewAnimationOptionTransitionFlipFromTop;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED < 80000
+    if (UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)) {
+      animationOptions = UIViewAnimationOptionTransitionFlipFromRight;
+    }
+#endif
   } else if ([direction isEqualToString:@"down"]) {
     animationOptions = UIViewAnimationOptionTransitionFlipFromBottom;
+#if __IPHONE_OS_VERSION_MAX_ALLOWED < 80000
+    if (UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)) {
+      animationOptions = UIViewAnimationOptionTransitionFlipFromLeft;
+    }
+#endif
   } else {
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"direction should be one of up|down|left|right"];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
