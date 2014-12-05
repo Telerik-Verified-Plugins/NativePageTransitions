@@ -36,15 +36,15 @@
   CGRect screenshotRect = [self.viewController.view.window frame];
 
   // correct landscape detection on iOS < 8
-#if __IPHONE_OS_VERSION_MAX_ALLOWED < 80000
-  BOOL isLandscape = UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
-  if (isLandscape) {
-    screenshotRect = CGRectMake(screenshotRect.origin.x, screenshotRect.origin.y, screenshotRect.size.height, screenshotRect.size.width);
-    CGFloat temp = width;
-    width = height;
-    height = temp;
+  if (!IsAtLeastiOSVersion(@"8.0")) {
+    BOOL isLandscape = UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
+    if (isLandscape) {
+      screenshotRect = CGRectMake(screenshotRect.origin.x, screenshotRect.origin.y, screenshotRect.size.height, screenshotRect.size.width);
+      CGFloat temp = width;
+      width = height;
+      height = temp;
+    }
   }
-#endif
 
   CGFloat transitionToX = 0;
   CGFloat transitionToY = 0;
@@ -169,15 +169,15 @@
   CGRect screenshotRect = [self.viewController.view.window frame];
   
   // correct landscape detection on iOS < 8
-#if __IPHONE_OS_VERSION_MAX_ALLOWED < 80000
-  BOOL isLandscape = UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
-  if (isLandscape) {
-    screenshotRect = CGRectMake(screenshotRect.origin.x, screenshotRect.origin.y, screenshotRect.size.height, screenshotRect.size.width);
-    CGFloat temp = width;
-    width = height;
-    height = temp;
+  if (!IsAtLeastiOSVersion(@"8.0")) {
+    BOOL isLandscape = UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
+    if (isLandscape) {
+      screenshotRect = CGRectMake(screenshotRect.origin.x, screenshotRect.origin.y, screenshotRect.size.height, screenshotRect.size.width);
+      CGFloat temp = width;
+      width = height;
+      height = temp;
+    }
   }
-#endif
 
   CGFloat transitionToX = 0;
   CGFloat webviewTransitionFromX = 0;
@@ -303,35 +303,89 @@
   
   UIViewAnimationOptions animationOptions;
   if ([direction isEqualToString:@"right"]) {
-    animationOptions = UIViewAnimationOptionTransitionFlipFromLeft;
-#if __IPHONE_OS_VERSION_MAX_ALLOWED < 80000
-    if (UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)) {
+    if (!IsAtLeastiOSVersion(@"8.0") && UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)) {
       animationOptions = UIViewAnimationOptionTransitionFlipFromTop;
-    }
-#endif
-  } else if ([direction isEqualToString:@"left"]) {
-    animationOptions = UIViewAnimationOptionTransitionFlipFromRight;
-#if __IPHONE_OS_VERSION_MAX_ALLOWED < 80000
-    if (UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)) {
-      animationOptions = UIViewAnimationOptionTransitionFlipFromBottom;
-    }
-#endif
-  } else if ([direction isEqualToString:@"up"]) {
-    animationOptions = UIViewAnimationOptionTransitionFlipFromTop;
-#if __IPHONE_OS_VERSION_MAX_ALLOWED < 80000
-    if (UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)) {
-      animationOptions = UIViewAnimationOptionTransitionFlipFromRight;
-    }
-#endif
-  } else if ([direction isEqualToString:@"down"]) {
-    animationOptions = UIViewAnimationOptionTransitionFlipFromBottom;
-#if __IPHONE_OS_VERSION_MAX_ALLOWED < 80000
-    if (UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)) {
+    } else {
       animationOptions = UIViewAnimationOptionTransitionFlipFromLeft;
     }
-#endif
+  } else if ([direction isEqualToString:@"left"]) {
+    if (!IsAtLeastiOSVersion(@"8.0") && UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)) {
+      animationOptions = UIViewAnimationOptionTransitionFlipFromBottom;
+    } else {
+      animationOptions = UIViewAnimationOptionTransitionFlipFromRight;
+    }
+  } else if ([direction isEqualToString:@"up"]) {
+    if (!IsAtLeastiOSVersion(@"8.0") && UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)) {
+      animationOptions = UIViewAnimationOptionTransitionFlipFromRight;
+    } else {
+      animationOptions = UIViewAnimationOptionTransitionFlipFromTop;
+    }
+  } else if ([direction isEqualToString:@"down"]) {
+    if (!IsAtLeastiOSVersion(@"8.0") && UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)) {
+      animationOptions = UIViewAnimationOptionTransitionFlipFromLeft;
+    } else {
+      animationOptions = UIViewAnimationOptionTransitionFlipFromBottom;
+    }
   } else {
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"direction should be one of up|down|left|right"];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    return;
+  }
+  
+  if ([self loadHrefIfPassed:href]) {
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
+      // remove the screenshot halfway during the transition
+      dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (duration/2) * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
+        [_screenShotImageView removeFromSuperview];
+      });
+      [UIView transitionWithView:self.viewController.view
+                        duration:duration
+                         options:animationOptions | UIViewAnimationOptionAllowAnimatedContent
+                      animations:^{}
+                      completion:^(BOOL finished) {
+                        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+                        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+                      }];
+    });
+  }
+}
+
+- (void) curl:(CDVInvokedUrlCommand*)command {
+  _command = command;
+  NSMutableDictionary *args = [command.arguments objectAtIndex:0];
+  NSString *direction = [args objectForKey:@"direction"];
+  NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
+  NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
+  NSString *href = [args objectForKey:@"href"];
+  
+  // duration is passed in ms, but needs to be in sec here
+  duration = duration / 1000;
+  
+  // overlay the webview with a screenshot to prevent the user from seeing changes in the webview before the flip kicks in
+  CGSize viewSize = self.viewController.view.bounds.size;
+  
+  UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0);
+  [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
+  
+  // Read the UIImage object
+  UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+  UIGraphicsEndImageContext();
+  
+  CGFloat width = self.viewController.view.frame.size.width;
+  CGFloat height = self.viewController.view.frame.size.height;
+  [_screenShotImageView setFrame:CGRectMake(0, 0, width, height)];
+  
+  _screenShotImageView = [[UIImageView alloc]initWithFrame:[self.viewController.view.window frame]];
+  [_screenShotImageView setImage:image];
+  [UIApplication.sharedApplication.keyWindow.subviews.lastObject insertSubview:_screenShotImageView aboveSubview:self.webView];
+  
+  UIViewAnimationOptions animationOptions;
+  if ([direction isEqualToString:@"up"]) {
+    animationOptions = UIViewAnimationOptionTransitionCurlUp;
+  } else if ([direction isEqualToString:@"down"]) {
+    animationOptions = UIViewAnimationOptionTransitionCurlDown;
+  } else {
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"direction should be one of up|down"];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     return;
   }

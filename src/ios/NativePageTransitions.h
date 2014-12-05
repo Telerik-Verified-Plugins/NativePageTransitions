@@ -10,5 +10,6 @@
 - (void) slide:(CDVInvokedUrlCommand*)command;
 - (void) drawer:(CDVInvokedUrlCommand*)command;
 - (void) flip:(CDVInvokedUrlCommand*)command;
+- (void) curl:(CDVInvokedUrlCommand*)command;
 
 @end

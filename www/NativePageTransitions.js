@@ -75,6 +75,21 @@ NativePageTransitions.prototype.flip = function (options, onSuccess, onError) {
   cordova.exec(onSuccess, onError, "NativePageTransitions", "flip", [opts]);
 };
 
+NativePageTransitions.prototype.curl = function (options, onSuccess, onError) {
+  var opts = options || {};
+  if (!this._validateHref(opts.href, onError)) {
+    return;
+  }
+  opts.direction = opts.direction || "up";
+  if (opts.duration == undefined || opts.duration == "null") {
+    opts.duration = this.globalOptions.duration;
+  }
+  if (opts.iosdelay == undefined || opts.iosdelay == "null") {
+    opts.iosdelay = this.globalOptions.iosdelay;
+  }
+  cordova.exec(onSuccess, onError, "NativePageTransitions", "curl", [opts]);
+};
+
 NativePageTransitions.prototype._validateHref = function (href, errCallback) {
   var currentHref = window.location.href.substr(window.location.href.indexOf('www/')+4);
   // if no href was passed the transition should always kick in
