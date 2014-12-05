@@ -36,14 +36,12 @@
   CGRect screenshotRect = [self.viewController.view.window frame];
 
   // correct landscape detection on iOS < 8
-  if (!IsAtLeastiOSVersion(@"8.0")) {
-    BOOL isLandscape = UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
-    if (isLandscape) {
-      screenshotRect = CGRectMake(screenshotRect.origin.x, screenshotRect.origin.y, screenshotRect.size.height, screenshotRect.size.width);
-      CGFloat temp = width;
-      width = height;
-      height = temp;
-    }
+  BOOL isLandscape = UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
+  if (isLandscape && width < height) {
+    screenshotRect = CGRectMake(screenshotRect.origin.x, screenshotRect.origin.y, screenshotRect.size.height, screenshotRect.size.width);
+    CGFloat temp = width;
+    width = height;
+    height = temp;
   }
 
   CGFloat transitionToX = 0;
@@ -169,14 +167,12 @@
   CGRect screenshotRect = [self.viewController.view.window frame];
   
   // correct landscape detection on iOS < 8
-  if (!IsAtLeastiOSVersion(@"8.0")) {
-    BOOL isLandscape = UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
-    if (isLandscape) {
-      screenshotRect = CGRectMake(screenshotRect.origin.x, screenshotRect.origin.y, screenshotRect.size.height, screenshotRect.size.width);
-      CGFloat temp = width;
-      width = height;
-      height = temp;
-    }
+  BOOL isLandscape = UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
+  if (isLandscape && width < height) {
+    screenshotRect = CGRectMake(screenshotRect.origin.x, screenshotRect.origin.y, screenshotRect.size.height, screenshotRect.size.width);
+    CGFloat temp = width;
+    width = height;
+    height = temp;
   }
 
   CGFloat transitionToX = 0;
@@ -303,25 +299,25 @@
   
   UIViewAnimationOptions animationOptions;
   if ([direction isEqualToString:@"right"]) {
-    if (!IsAtLeastiOSVersion(@"8.0") && UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)) {
+    if (width < height && UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)) {
       animationOptions = UIViewAnimationOptionTransitionFlipFromTop;
     } else {
       animationOptions = UIViewAnimationOptionTransitionFlipFromLeft;
     }
   } else if ([direction isEqualToString:@"left"]) {
-    if (!IsAtLeastiOSVersion(@"8.0") && UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)) {
+    if (width < height && UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)) {
       animationOptions = UIViewAnimationOptionTransitionFlipFromBottom;
     } else {
       animationOptions = UIViewAnimationOptionTransitionFlipFromRight;
     }
   } else if ([direction isEqualToString:@"up"]) {
-    if (!IsAtLeastiOSVersion(@"8.0") && UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)) {
+    if (width < height && UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)) {
       animationOptions = UIViewAnimationOptionTransitionFlipFromRight;
     } else {
       animationOptions = UIViewAnimationOptionTransitionFlipFromTop;
     }
   } else if ([direction isEqualToString:@"down"]) {
-    if (!IsAtLeastiOSVersion(@"8.0") && UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)) {
+    if (width < height && UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation)) {
       animationOptions = UIViewAnimationOptionTransitionFlipFromLeft;
     } else {
       animationOptions = UIViewAnimationOptionTransitionFlipFromBottom;
