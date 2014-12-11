@@ -141,10 +141,10 @@ namespace Cordova.Extension.Commands
                             path = path.Substring(2);
                         }
 ﻿                        if (path.Contains("#"))
-                        {
-                            path = path.Substring(0, path.IndexOf("#"));
-                        }
-                        to = path + to;
+                         {
+                             path = path.Substring(0, path.IndexOf("#"));
+                         }
+                         to = path + to;
                     }
                     else
                     {
@@ -197,7 +197,7 @@ namespace Cordova.Extension.Commands
             {
                 // grab a screenshot
                 WriteableBitmap bmp = new WriteableBitmap(browser, null);
-                
+
                 img2 = new Image();
                 img2.Source = bmp;
 
@@ -234,10 +234,10 @@ namespace Cordova.Extension.Commands
                             path = path.Substring(2);
                         }
 ﻿                        if (path.Contains("#"))
-                        {
-                            path = path.Substring(0, path.IndexOf("#"));
-                        }
-                        to = path + to;
+                         {
+                             path = path.Substring(0, path.IndexOf("#"));
+                         }
+                         to = path + to;
                         //Debug.WriteLine("browser will navigate to (a): " + to);
                     }
                     else
@@ -250,6 +250,7 @@ namespace Cordova.Extension.Commands
 
                 TimeSpan duration = TimeSpan.FromMilliseconds(transitionOptions.duration);
                 Storyboard sb = new Storyboard();
+                sb.Completed += flipAnimationCompleted;
 
                 // animation for the screenshot
                 DoubleAnimation imgAnimation = new DoubleAnimation()
@@ -302,6 +303,13 @@ namespace Cordova.Extension.Commands
                 CordovaView cView = getCordovaView();
                 cView.LayoutRoot.Children.Remove(img2);
             });
+            DispatchCommandResult(new PluginResult(PluginResult.Status.OK));
+        }
+
+        private void flipAnimationCompleted(object sender, EventArgs e)
+        {
+            (sender as Storyboard).Completed -= flipAnimationCompleted;
+            DispatchCommandResult(new PluginResult(PluginResult.Status.OK));
         }
 
         void Browser_Navigated(object sender, NavigationEventArgs e)
