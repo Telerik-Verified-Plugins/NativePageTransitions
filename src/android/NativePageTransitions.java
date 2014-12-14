@@ -36,6 +36,9 @@ public class NativePageTransitions extends CordovaPlugin {
   private FrameLayout layout;
   private static final boolean BEFORE_KITKAT = Build.VERSION.SDK_INT < 19;
   private final boolean requiresRedraw = BEFORE_KITKAT;
+  private static final String HREF_PREFIX = "file:///android_asset/www/";
+  // this plugin listens to page changes, so only kick in a transition when it was actually requested by the JS bridge
+  private String lastCallbackID;
 
   class MyCordovaWebViewClient extends CordovaWebViewClient {
     public MyCordovaWebViewClient(CordovaInterface cordova, CordovaWebView view) {
@@ -134,7 +137,7 @@ public class NativePageTransitions extends CordovaPlugin {
 
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
-              webView.loadUrlIntoView("file:///android_asset/www/" + href, false);
+              webView.loadUrlIntoView(HREF_PREFIX + href, false);
             } else {
               // it's a #hash
               String url = webView.getUrl();
@@ -197,7 +200,7 @@ public class NativePageTransitions extends CordovaPlugin {
 
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
-              webView.loadUrlIntoView("file:///android_asset/www/" + href, false);
+              webView.loadUrlIntoView(HREF_PREFIX + href, false);
             } else {
               // it's a #hash
               String url = webView.getUrl();
@@ -232,7 +235,7 @@ public class NativePageTransitions extends CordovaPlugin {
 
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
-              webView.loadUrlIntoView("file:///android_asset/www/" + href, false);
+              webView.loadUrlIntoView(HREF_PREFIX + href, false);
             } else {
               // it's a #hash
               String url = webView.getUrl();
@@ -252,9 +255,10 @@ public class NativePageTransitions extends CordovaPlugin {
   }
 
   private void doFlipTransition() {
-    if (!calledFromJS) {
+    if (!calledFromJS || this._callbackContext.getCallbackId().equals(lastCallbackID)) {
       return;
     }
+    lastCallbackID = this._callbackContext.getCallbackId();
 
     new Timer().schedule(new TimerTask() {
       public void run() {
@@ -321,9 +325,10 @@ public class NativePageTransitions extends CordovaPlugin {
   }
 
   private void doSlideTransition() {
-    if (!calledFromJS) {
+    if (!calledFromJS || this._callbackContext.getCallbackId().equals(lastCallbackID)) {
       return;
     }
+    lastCallbackID = this._callbackContext.getCallbackId();
 
     new Timer().schedule(new TimerTask() {
       public void run() {
@@ -429,9 +434,10 @@ public class NativePageTransitions extends CordovaPlugin {
   }
 
   private void doDrawerTransition() {
-    if (!calledFromJS) {
+    if (!calledFromJS || this._callbackContext.getCallbackId().equals(lastCallbackID)) {
       return;
     }
+    lastCallbackID = this._callbackContext.getCallbackId();
 
     new Timer().schedule(new TimerTask() {
       public void run() {
@@ -504,7 +510,6 @@ public class NativePageTransitions extends CordovaPlugin {
               webView.setAnimation(animation);
               layout.startLayoutAnimation();
             }
-
             calledFromJS = false;
           }
         });
@@ -527,8 +532,6 @@ public class NativePageTransitions extends CordovaPlugin {
       imageView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
       if (BEFORE_KITKAT) {
         webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-      } else {
-        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
       }
     }
   }
