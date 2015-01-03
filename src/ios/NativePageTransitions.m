@@ -21,7 +21,11 @@
   NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
   NSString *href = [args objectForKey:@"href"];
   NSNumber *slowdownfactor = [args objectForKey:@"slowdownfactor"];
-  
+  NSNumber *fixedPixelsTopNum = [args objectForKey:@"fixedPixelsTop"];
+  NSNumber *fixedPixelsBottomNum = [args objectForKey:@"fixedPixelsBottom"];
+  int fixedPixelsTop = [fixedPixelsTopNum intValue];
+  int fixedPixelsBottom = [fixedPixelsBottomNum intValue];
+
   self.viewController.view.backgroundColor = [UIColor blackColor];
   self.webView.layer.shadowOpacity = 0;
   
@@ -79,17 +83,15 @@
 
   _screenShotImageView = [[UIImageView alloc]initWithFrame:screenshotRect];
   [_screenShotImageView setImage:image];
+  CGFloat retinaFactor = DISPLAY_SCALE;
   
   // in case of a statusbar above the webview, crop off the top
-  // TODO this can also be used for not scrolling fixed headers and footers
   if (_nonWebViewHeight > 0 && [direction isEqualToString:@"down"]) {
-    CGFloat retinaFactor = DISPLAY_SCALE;
     CGRect rect = CGRectMake(0.0, _nonWebViewHeight*retinaFactor, image.size.width*retinaFactor, (image.size.height-_nonWebViewHeight)*retinaFactor);
     CGRect rect2 = CGRectMake(0.0, _nonWebViewHeight, image.size.width, image.size.height-_nonWebViewHeight);
     CGImageRef tempImage = CGImageCreateWithImageInRect([image CGImage], rect);
-    UIImage *newImage = [UIImage imageWithCGImage:tempImage];
     _screenShotImageView = [[UIImageView alloc]initWithFrame:rect2];
-    [_screenShotImageView setImage:newImage];
+    [_screenShotImageView setImage:[UIImage imageWithCGImage:tempImage]];
     CGImageRelease(tempImage);
   }
   
@@ -97,6 +99,32 @@
     [UIApplication.sharedApplication.keyWindow.subviews.lastObject insertSubview:_screenShotImageView belowSubview:self.webView];
   } else {
     [UIApplication.sharedApplication.keyWindow.subviews.lastObject insertSubview:_screenShotImageView aboveSubview:self.webView];
+  }
+
+  // Make a cropped version of the screenshot with only the top and/or bottom piece. Only for left/right slides atm.
+  if ([direction isEqualToString:@"left"] || [direction isEqualToString:@"right"]) {
+    if (fixedPixelsTop > 0) {
+      CGRect rect = CGRectMake(0.0, fixedPixelsTop*retinaFactor, image.size.width*retinaFactor, fixedPixelsTop*retinaFactor);
+      CGRect rect2 = CGRectMake(0.0, fixedPixelsTop, image.size.width, fixedPixelsTop);
+      CGImageRef tempImage = CGImageCreateWithImageInRect([image CGImage], rect);
+      _screenShotImageViewTop = [[UIImageView alloc]initWithFrame:rect2];
+      [_screenShotImageViewTop setImage:[UIImage imageWithCGImage:tempImage]];
+      CGImageRelease(tempImage);
+      [UIApplication.sharedApplication.keyWindow.subviews.lastObject
+       insertSubview:_screenShotImageViewTop
+       aboveSubview:([direction isEqualToString:@"left"] ? self.webView : self.screenShotImageView)];
+    }
+    if (fixedPixelsBottom > 0) {
+      CGRect rect = CGRectMake(0.0, (image.size.height-fixedPixelsBottom)*retinaFactor, image.size.width*retinaFactor, fixedPixelsBottom*retinaFactor);
+      CGRect rect2 = CGRectMake(0.0, image.size.height-fixedPixelsBottom, image.size.width, fixedPixelsBottom);
+      CGImageRef tempImage = CGImageCreateWithImageInRect([image CGImage], rect);
+      _screenShotImageViewBottom = [[UIImageView alloc]initWithFrame:rect2];
+      [_screenShotImageViewBottom setImage:[UIImage imageWithCGImage:tempImage]];
+      CGImageRelease(tempImage);
+      [UIApplication.sharedApplication.keyWindow.subviews.lastObject
+          insertSubview:_screenShotImageViewBottom
+          aboveSubview:([direction isEqualToString:@"left"] ? self.webView : self.screenShotImageView)];
+    }
   }
   
   if ([self loadHrefIfPassed:href]) {
@@ -133,6 +161,9 @@
                        [self.webView setFrame:CGRectMake(0, webviewToY, width, height)];
                      }
                      completion:^(BOOL finished) {
+                       // doesn't matter if these weren't added
+                       [_screenShotImageViewTop removeFromSuperview];
+                       [_screenShotImageViewBottom removeFromSuperview];
                      }];
     
     if ([slowdownfactor intValue] != 1 && ([direction isEqualToString:@"right"] || [direction isEqualToString:@"down"])) {
