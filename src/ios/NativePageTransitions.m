@@ -3,7 +3,8 @@
 @implementation NativePageTransitions
 
 #define IS_RETINA_DISPLAY() [[UIScreen mainScreen] respondsToSelector:@selector(scale)] && [[UIScreen mainScreen] scale] == 2.0f
-#define DISPLAY_SCALE IS_RETINA_DISPLAY() ? 2.0f : 1.0f
+#define IS_RETINA_HD_DISPLAY() [[UIScreen mainScreen] respondsToSelector:@selector(scale)] && [[UIScreen mainScreen] scale] == 3.0f
+#define DISPLAY_SCALE IS_RETINA_HD_DISPLAY() ? 3.0f : (IS_RETINA_DISPLAY() ? 2.0f : 1.0f)
 
 - (CDVPlugin*) initWithWebView:(UIWebView*)theWebView {
   self = [super initWithWebView:theWebView];
