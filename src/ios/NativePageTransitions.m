@@ -26,7 +26,7 @@
   NSNumber *fixedPixelsBottomNum = [args objectForKey:@"fixedPixelsBottom"];
   int fixedPixelsTop = [fixedPixelsTopNum intValue];
   int fixedPixelsBottom = [fixedPixelsBottomNum intValue];
-
+  
   self.viewController.view.backgroundColor = [UIColor blackColor];
   self.webView.layer.shadowOpacity = 0;
   
@@ -39,7 +39,7 @@
   CGFloat width = self.viewController.view.frame.size.width;
   CGFloat height = self.viewController.view.frame.size.height;
   CGRect screenshotRect = [self.viewController.view.window frame];
-
+  
   // correct landscape detection on iOS < 8
   BOOL isLandscape = UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
   if (isLandscape && width < height) {
@@ -48,7 +48,7 @@
     width = height;
     height = temp;
   }
-
+  
   CGFloat transitionToX = 0;
   CGFloat transitionToY = 0;
   CGFloat webviewFromY = _nonWebViewHeight;
@@ -77,11 +77,11 @@
   
   UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0);
   [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
-
+  
   // Read the UIImage object
   UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
   UIGraphicsEndImageContext();
-
+  
   _screenShotImageView = [[UIImageView alloc]initWithFrame:screenshotRect];
   [_screenShotImageView setImage:image];
   CGFloat retinaFactor = DISPLAY_SCALE;
@@ -101,12 +101,12 @@
   } else {
     [self.webView.superview insertSubview:_screenShotImageView aboveSubview:self.webView];
   }
-
+  
   // Make a cropped version of the screenshot with only the top and/or bottom piece. Only for left/right slides atm.
   if ([direction isEqualToString:@"left"] || [direction isEqualToString:@"right"]) {
     if (fixedPixelsTop > 0) {
-      CGRect rect = CGRectMake(0.0, fixedPixelsTop*retinaFactor, image.size.width*retinaFactor, fixedPixelsTop*retinaFactor);
-      CGRect rect2 = CGRectMake(0.0, fixedPixelsTop, image.size.width, fixedPixelsTop);
+      CGRect rect = CGRectMake(0.0, _nonWebViewHeight*retinaFactor, image.size.width*retinaFactor, fixedPixelsTop*retinaFactor);
+      CGRect rect2 = CGRectMake(0.0, _nonWebViewHeight, image.size.width, fixedPixelsTop);
       CGImageRef tempImage = CGImageCreateWithImageInRect([image CGImage], rect);
       _screenShotImageViewTop = [[UIImageView alloc]initWithFrame:rect2];
       [_screenShotImageViewTop setImage:[UIImage imageWithCGImage:tempImage]];
@@ -149,13 +149,13 @@
                        }];
     }
     
-    [self.webView setFrame:CGRectMake(-transitionToX/webviewSlowdownFactor, webviewFromY, width, height)];
+    [self.webView setFrame:CGRectMake(-transitionToX/webviewSlowdownFactor, webviewFromY, width, height-_nonWebViewHeight)];
     
     [UIView animateWithDuration:duration
                           delay:delay
                         options:UIViewAnimationOptionCurveEaseInOut
                      animations:^{
-                       [self.webView setFrame:CGRectMake(0, webviewToY, width, height)];
+                       [self.webView setFrame:CGRectMake(0, webviewToY, width, height-_nonWebViewHeight)];
                      }
                      completion:^(BOOL finished) {
                        // doesn't matter if these weren't added
@@ -202,7 +202,7 @@
     width = height;
     height = temp;
   }
-
+  
   CGFloat transitionToX = 0;
   CGFloat webviewTransitionFromX = 0;
   int screenshotPx = 44;
@@ -274,7 +274,7 @@
     }
     
     if ([action isEqualToString:@"close"]) {
-      [self.webView setFrame:CGRectMake(webviewTransitionFromX, _nonWebViewHeight, width, height)];
+      [self.webView setFrame:CGRectMake(webviewTransitionFromX, _nonWebViewHeight, width, height-_nonWebViewHeight)];
       
       // position the webview above the screenshot just after the animation kicks in so no flash of the webview occurs
       dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay+50 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
@@ -285,7 +285,7 @@
                             delay:delay
                           options:UIViewAnimationOptionCurveEaseInOut
                        animations:^{
-                         [self.webView setFrame:CGRectMake(0, _nonWebViewHeight, width, height)];
+                         [self.webView setFrame:CGRectMake(0, _nonWebViewHeight, width, height-_nonWebViewHeight)];
                        }
                        completion:^(BOOL finished) {
                          [_screenShotImageView removeFromSuperview];
