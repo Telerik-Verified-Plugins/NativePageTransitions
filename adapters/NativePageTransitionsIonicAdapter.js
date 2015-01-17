@@ -8,15 +8,25 @@
  * Slide default: left, Flip default: right.
  *
  * If you specify a default transitions, we will use that as the default as expected:
- * <body animation="slide-up-down">
+ * <body animation="slide-left-right">
  *
- * (untested feature:) Prevent anchors (<a> tags) from being auto-enhanced by adding:
- * animation-native="false" to the tag.
+ * Prevent anchors (<a> tags) or back buttons from being auto-enhanced by adding:
+ * animation-native="false" to the tag: <ion-nav-back-button animation-native="false">
  *
  * (untested feature:) To add a delay for ios or android, add:
  * animation-native-androiddelay="200" to the tag (200 ms for android in this case)
  *
  * TODO: add attributes for things like duration and slowdownfactor
+ *
+ *
+ ************************************************************************************
+ * PRO TIP: specify details in the $ionicPlatform.ready function of app.js:
+ *
+ *   window.plugins.nativepagetransitions.globalOptions.duration = 350;
+ *   window.plugins.nativepagetransitions.globalOptions.slowdownfactor = 8;
+ *   // window.plugins.nativepagetransitions.globalOptions.fixedPixelsTop = 64;
+ *   window.plugins.nativepagetransitions.globalOptions.fixedPixelsBottom = 48;
+ *
  */
 
 (function () {
@@ -41,7 +51,7 @@
   NativePageTransitionsIonicAdapter.prototype = {
 
     enhanceBackbuttons: function (from) {
-      var backbuttons = document.querySelectorAll('ion-nav-back-button');
+      var backbuttons = document.querySelectorAll('button.back-button');
       for (var j = 0; j < backbuttons.length; j++) {
         var backbutton = backbuttons[j];
         if (backbutton.getAttribute("animation-native") !== "false") {
