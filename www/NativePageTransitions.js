@@ -6,7 +6,9 @@ NativePageTransitions.prototype.globalOptions =  {
   iosdelay: 60,
   androiddelay: 70,
   winphonedelay: 200,
-  slowdownfactor: 4
+  slowdownfactor: 4,
+  fixedPixelsTop: 0,    // currently for slide left/right only
+  fixedPixelsBottom: 0  // currently for slide left/right only
 };
 
 NativePageTransitions.prototype.slide = function (options, onSuccess, onError) {
@@ -26,6 +28,12 @@ NativePageTransitions.prototype.slide = function (options, onSuccess, onError) {
   }
   if (opts.winphonedelay == undefined || opts.winphonedelay == "null") {
     opts.winphonedelay = this.globalOptions.winphonedelay;
+  }
+  if (opts.fixedPixelsTop == undefined || opts.fixedPixelsTop == "null") {
+    opts.fixedPixelsTop = this.globalOptions.fixedPixelsTop;
+  }
+  if (opts.fixedPixelsBottom == undefined || opts.fixedPixelsBottom == "null") {
+    opts.fixedPixelsBottom = this.globalOptions.fixedPixelsBottom;
   }
   // setting slowdownfactor > 1 makes the next page slide less pixels. Use 1 for side-by-side.
   opts.slowdownfactor = opts.slowdownfactor || this.globalOptions.slowdownfactor;
