@@ -103,8 +103,8 @@
             var href = transAnchor.getAttribute("href");
 
             var androiddelay = transAnchor.getAttribute("animation-native-androiddelay");
-            if (iosdelay == null) {
-              iosdelay = 100;
+            if (androiddelay == null) {
+              androiddelay = 100;
             }
             var iosdelay = transAnchor.getAttribute("animation-native-iosdelay");
             if (iosdelay == null) {
