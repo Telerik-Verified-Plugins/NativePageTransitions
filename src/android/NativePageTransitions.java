@@ -6,7 +6,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.*;
-import android.webkit.WebView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import com.telerik.plugins.nativepagetransitions.lib.AnimationFactory;
@@ -40,14 +39,8 @@ public class NativePageTransitions extends CordovaPlugin {
   // this plugin listens to page changes, so only kick in a transition when it was actually requested by the JS bridge
   private String lastCallbackID;
 
-  class MyCordovaWebViewClient extends CordovaWebViewClient {
-    public MyCordovaWebViewClient(CordovaInterface cordova, CordovaWebView view) {
-      super(cordova, view);
-    }
-
-    @Override
-    public void onPageFinished(WebView view, String url) {
-      super.onPageFinished(view, url);
+  @Override public Object onMessage(String id, Object params) {
+    if ("onPageFinished".equals(id)) {
       if ("slide".equalsIgnoreCase(_action)) {
         doSlideTransition();
       } else if ("flip".equalsIgnoreCase(_action)) {
@@ -56,14 +49,12 @@ public class NativePageTransitions extends CordovaPlugin {
         doDrawerTransition();
       }
     }
+    return null;
   }
 
   @Override
   public void initialize(CordovaInterface cordova, CordovaWebView webView) {
     super.initialize(cordova, webView);
-    // required when a href is passed to better control the transition timing
-    // TODO may be replaced by a 'load' listener (but that doesnt work for hashnav)
-    webView.setWebViewClient(new MyCordovaWebViewClient(cordova, webView));
     imageView = new ImageView(cordova.getActivity().getBaseContext());
     imageView2 = new ImageView(cordova.getActivity().getBaseContext());
 
