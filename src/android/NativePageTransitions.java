@@ -2,10 +2,15 @@ package com.telerik.plugins.nativepagetransitions;
 
 import android.graphics.Bitmap;
 import android.os.Build;
+import android.util.DisplayMetrics;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.view.animation.*;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
+import android.view.animation.TranslateAnimation;
 import android.webkit.WebView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -23,12 +28,17 @@ public class NativePageTransitions extends CordovaPlugin {
 
   private ImageView imageView;
   private ImageView imageView2;
+  private ImageView fixedImageViewTop;
+  private ImageView fixedImageViewBottom;
+  private float retinaFactor;
   private long duration;
   private long delay;
   private String drawerAction;
   private String drawerOrigin;
   private String direction;
   private int slowdownfactor;
+  private int fixedPixelsTop;
+  private int fixedPixelsBottom;
   private CallbackContext _callbackContext;
   private String _action;
   // this plugin listens to page changes, so only kick in a transition when it was actually requested by the JS bridge
@@ -82,6 +92,10 @@ public class NativePageTransitions extends CordovaPlugin {
     layout.addView(webView);
     layout.addView(imageView);
     layout.addView(imageView2);
+
+    DisplayMetrics metrics = new DisplayMetrics();
+    cordova.getActivity().getWindowManager().getDefaultDisplay().getMetrics(metrics);
+    retinaFactor = metrics.density;
   }
 
   int drawerNonOverlappingSpace;
@@ -122,6 +136,8 @@ public class NativePageTransitions extends CordovaPlugin {
       direction = json.getString("direction");
       delay = json.getLong("androiddelay");
       slowdownfactor = json.getInt("slowdownfactor");
+      fixedPixelsTop = json.getInt("fixedPixelsTop");
+      fixedPixelsBottom = json.getInt("fixedPixelsBottom");
 
       cordova.getActivity().runOnUiThread(new Runnable() {
         @Override
@@ -134,6 +150,24 @@ public class NativePageTransitions extends CordovaPlugin {
           webView.setDrawingCacheEnabled(false);
           imageView.setImageBitmap(bitmap);
           bringToFront(imageView);
+
+          // crop the screenshot if fixed pixels have been passed when sliding left or right
+          if ("left".equals(direction) || "right".equals(direction)) {
+            if (fixedPixelsTop > 0) {
+              int cropHeight = (int)(fixedPixelsTop * retinaFactor);
+              fixedImageViewTop = new ImageView(cordova.getActivity().getBaseContext());
+              fixedImageViewTop.setImageBitmap(Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), cropHeight));
+              final FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP);
+              layout.addView(fixedImageViewTop, lp);
+            }
+            if (fixedPixelsBottom > 0) {
+              int cropHeight = (int)(fixedPixelsBottom * retinaFactor);
+              fixedImageViewBottom = new ImageView(cordova.getActivity().getBaseContext());
+              fixedImageViewBottom.setImageBitmap(Bitmap.createBitmap(bitmap, 0, bitmap.getHeight()-cropHeight, bitmap.getWidth(), cropHeight));
+              final FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM);
+              layout.addView(fixedImageViewBottom, lp);
+            }
+          }
 
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
@@ -364,6 +398,13 @@ public class NativePageTransitions extends CordovaPlugin {
               webviewSlowdownFactor = slowdownfactor;
             }
 
+            if (fixedImageViewTop != null) {
+              bringToFront(fixedImageViewTop);
+            }
+            if (fixedImageViewBottom != null) {
+              bringToFront(fixedImageViewBottom);
+            }
+
             // imageview animation
             final AnimationSet imageViewAnimation = new AnimationSet(true);
 
@@ -406,7 +447,25 @@ public class NativePageTransitions extends CordovaPlugin {
 
               @Override
               public void onAnimationEnd(Animation animation) {
-                imageView.setImageBitmap(null);
+                // prevent a flash by removing the optional fixed header/footer screenshots with a little delay
+                if (fixedImageViewTop != null || fixedImageViewBottom != null) {
+                  new Timer().schedule(new TimerTask() {
+                    public void run() {
+                      cordova.getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                          if (fixedImageViewTop != null) {
+                            fixedImageViewTop.setImageBitmap(null);
+                          }
+                          if (fixedImageViewBottom != null) {
+                            fixedImageViewBottom.setImageBitmap(null);
+                          }
+                          imageView.setImageBitmap(null);
+                        }
+                      });
+                    }
+                  }, 20);
+                }
                 _callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
               }
 
