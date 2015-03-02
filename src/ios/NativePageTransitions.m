@@ -9,9 +9,33 @@
 - (CDVPlugin*) initWithWebView:(UIWebView*)theWebView {
   self = [super initWithWebView:theWebView];
   CGRect screenBound = [[UIScreen mainScreen] bounds];
+  
+  // Set our transitioning view
+  self.transitionView = self.webView;
+  
+  // Look to see if a WKWebView exists
+  Class wkWebViewClass = NSClassFromString(@"WKWebView");
+  if (wkWebViewClass) {
+    for (int i = 0; i < self.webView.superview.subviews.count; i++) {
+      UIView *subview = [self.webView.superview.subviews objectAtIndex:i];
+      if ([subview isKindOfClass:wkWebViewClass]) {
+        self.transitionView = self.wkWebView = (WKWebView *)subview;
+      }
+    }
+  }
+  
   // webview height may differ from screen height because of a statusbar
-  _nonWebViewHeight = screenBound.size.width-self.webView.frame.size.width + screenBound.size.height-self.webView.frame.size.height;
+  _nonWebViewHeight = screenBound.size.width-self.transitionView.frame.size.width + screenBound.size.height-self.transitionView.frame.size.height;
   return self;
+}
+
+- (void)dispose
+{
+  // Cleanup
+  self.transitionView = nil;
+  self.wkWebView = nil;
+  
+  [super dispose];
 }
 
 - (void) slide:(CDVInvokedUrlCommand*)command {
@@ -28,7 +52,7 @@
   int fixedPixelsBottom = [fixedPixelsBottomNum intValue];
   
   self.viewController.view.backgroundColor = [UIColor blackColor];
-  self.webView.layer.shadowOpacity = 0;
+  self.transitionView.layer.shadowOpacity = 0;
   
   // duration/delay is passed in ms, but needs to be in sec here
   duration = duration / 1000;
@@ -74,9 +98,15 @@
   }
   
   CGSize viewSize = self.viewController.view.bounds.size;
-  
+
   UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0);
-  [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
+  // Since drawViewHierarchyInRect is slower than renderInContext we should only
+  // use it to overcome the bug in WKWebView
+  if (self.wkWebView != nil) {
+    [self.viewController.view drawViewHierarchyInRect:self.viewController.view.bounds afterScreenUpdates:NO];
+  } else {
+    [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
+  }
   
   // Read the UIImage object
   UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
@@ -97,9 +127,9 @@
   }
   
   if ([direction isEqualToString:@"left"] || [direction isEqualToString:@"up"]) {
-    [self.webView.superview insertSubview:_screenShotImageView belowSubview:self.webView];
+    [self.transitionView.superview insertSubview:_screenShotImageView belowSubview:self.transitionView];
   } else {
-    [self.webView.superview insertSubview:_screenShotImageView aboveSubview:self.webView];
+    [self.transitionView.superview insertSubview:_screenShotImageView aboveSubview:self.transitionView];
   }
   
   // Make a cropped version of the screenshot with only the top and/or bottom piece. Only for left/right slides atm.
@@ -111,7 +141,7 @@
       _screenShotImageViewTop = [[UIImageView alloc]initWithFrame:rect2];
       [_screenShotImageViewTop setImage:[UIImage imageWithCGImage:tempImage]];
       CGImageRelease(tempImage);
-      [self.webView.superview insertSubview:_screenShotImageViewTop aboveSubview:([direction isEqualToString:@"left"] ? self.webView : self.screenShotImageView)];
+      [self.transitionView.superview insertSubview:_screenShotImageViewTop aboveSubview:([direction isEqualToString:@"left"] ? self.transitionView : self.screenShotImageView)];
     }
     if (fixedPixelsBottom > 0) {
       CGRect rect = CGRectMake(0.0, (image.size.height-fixedPixelsBottom)*retinaFactor, image.size.width*retinaFactor, fixedPixelsBottom*retinaFactor);
@@ -120,7 +150,7 @@
       _screenShotImageViewBottom = [[UIImageView alloc]initWithFrame:rect2];
       [_screenShotImageViewBottom setImage:[UIImage imageWithCGImage:tempImage]];
       CGImageRelease(tempImage);
-      [self.webView.superview insertSubview:_screenShotImageViewBottom aboveSubview:([direction isEqualToString:@"left"] ? self.webView : self.screenShotImageView)];
+      [self.transitionView.superview insertSubview:_screenShotImageViewBottom aboveSubview:([direction isEqualToString:@"left"] ? self.transitionView : self.screenShotImageView)];
     }
   }
   
@@ -149,13 +179,13 @@
                        }];
     }
     
-    [self.webView setFrame:CGRectMake(-transitionToX/webviewSlowdownFactor, webviewFromY, width, height-_nonWebViewHeight)];
+    [self.transitionView setFrame:CGRectMake(-transitionToX/webviewSlowdownFactor, webviewFromY, width, height-_nonWebViewHeight)];
     
     [UIView animateWithDuration:duration
                           delay:delay
                         options:UIViewAnimationOptionCurveEaseInOut
                      animations:^{
-                       [self.webView setFrame:CGRectMake(0, webviewToY, width, height-_nonWebViewHeight)];
+                       [self.transitionView setFrame:CGRectMake(0, webviewToY, width, height-_nonWebViewHeight)];
                      }
                      completion:^(BOOL finished) {
                        // doesn't matter if these weren't added
@@ -164,12 +194,12 @@
                      }];
     
     if ([slowdownfactor intValue] != 1 && ([direction isEqualToString:@"right"] || [direction isEqualToString:@"down"])) {
-      self.webView.alpha = lowerLayerAlpha;
+      self.transitionView.alpha = lowerLayerAlpha;
       [UIView animateWithDuration:duration
                             delay:delay
                           options:UIViewAnimationOptionCurveEaseInOut
                        animations:^{
-                         self.webView.alpha = 1.0;
+                         self.transitionView.alpha = 1.0;
                        }
                        completion:^(BOOL finished) {
                        }];
@@ -244,15 +274,15 @@
   }
   [_screenShotImageView setImage:image];
   if ([action isEqualToString:@"open"]) {
-    [self.webView.superview insertSubview:_screenShotImageView aboveSubview:self.webView];
+    [self.transitionView.superview insertSubview:_screenShotImageView aboveSubview:self.transitionView];
   } else {
     // add a cool shadow here as well
-    UIBezierPath *shadowPath = [UIBezierPath bezierPathWithRect:self.webView.bounds];
-    self.webView.layer.masksToBounds = NO;
-    self.webView.layer.shadowColor = [UIColor blackColor].CGColor;
-    self.webView.layer.shadowOffset = CGSizeMake(0.0f, 5.0f);
-    self.webView.layer.shadowOpacity = 0.5f;
-    self.webView.layer.shadowPath = shadowPath.CGPath;
+    UIBezierPath *shadowPath = [UIBezierPath bezierPathWithRect:self.transitionView.bounds];
+    self.transitionView.layer.masksToBounds = NO;
+    self.transitionView.layer.shadowColor = [UIColor blackColor].CGColor;
+    self.transitionView.layer.shadowOffset = CGSizeMake(0.0f, 5.0f);
+    self.transitionView.layer.shadowOpacity = 0.5f;
+    self.transitionView.layer.shadowPath = shadowPath.CGPath;
   }
   
   if ([self loadHrefIfPassed:href]) {
@@ -274,18 +304,18 @@
     }
     
     if ([action isEqualToString:@"close"]) {
-      [self.webView setFrame:CGRectMake(webviewTransitionFromX, _nonWebViewHeight, width, height-_nonWebViewHeight)];
+      [self.transitionView setFrame:CGRectMake(webviewTransitionFromX, _nonWebViewHeight, width, height-_nonWebViewHeight)];
       
       // position the webview above the screenshot just after the animation kicks in so no flash of the webview occurs
       dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay+50 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
-        [self.webView.superview bringSubviewToFront:self.webView];
+        [self.transitionView.superview bringSubviewToFront:self.transitionView];
       });
       
       [UIView animateWithDuration:duration
                             delay:delay
                           options:UIViewAnimationOptionCurveEaseInOut
                        animations:^{
-                         [self.webView setFrame:CGRectMake(0, _nonWebViewHeight, width, height-_nonWebViewHeight)];
+                         [self.transitionView setFrame:CGRectMake(0, _nonWebViewHeight, width, height-_nonWebViewHeight)];
                        }
                        completion:^(BOOL finished) {
                          [_screenShotImageView removeFromSuperview];
@@ -323,7 +353,7 @@
   
   _screenShotImageView = [[UIImageView alloc]initWithFrame:[self.viewController.view.window frame]];
   [_screenShotImageView setImage:image];
-  [self.webView.superview insertSubview:_screenShotImageView aboveSubview:self.webView];
+  [self.transitionView.superview insertSubview:_screenShotImageView aboveSubview:self.transitionView];
   
   UIViewAnimationOptions animationOptions;
   if ([direction isEqualToString:@"right"]) {
@@ -401,7 +431,7 @@
   
   _screenShotImageView = [[UIImageView alloc]initWithFrame:[self.viewController.view.window frame]];
   [_screenShotImageView setImage:image];
-  [self.webView.superview insertSubview:_screenShotImageView aboveSubview:self.webView];
+  [self.transitionView.superview insertSubview:_screenShotImageView aboveSubview:self.transitionView];
   
   UIViewAnimationOptions animationOptions;
   if ([direction isEqualToString:@"up"]) {
@@ -459,14 +489,27 @@
         url = [NSURL URLWithString:absoluteURLWithParams];
       }
       
-      [self.webView loadRequest: [NSURLRequest requestWithURL:url]];
+      NSURLRequest *urlRequest = [NSURLRequest requestWithURL:url];
+      
+      // Utilize WKWebView for request if it exists
+      if (self.wkWebView != nil) {
+        [self.wkWebView loadRequest: urlRequest];
+      } else {
+        [self.webView loadRequest: urlRequest];
+      }
     } else if (![href hasPrefix:@"#"]) {
       CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"href must be null, a .html file or a #navigationhash"];
       [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
       return NO;
     } else {
       // it's a hash, so load the url without any possible current hash
-      NSString *url = self.webView.request.URL.absoluteString;
+      NSString *url = nil;
+      if (self.wkWebView != nil) {
+        url = self.wkWebView.URL.absoluteString;
+      } else {
+        url = self.webView.request.URL.absoluteString;
+      }
+      
       // remove the # if it's still there
       if ([url rangeOfString:@"#"].location != NSNotFound) {
         NSRange range = [url rangeOfString:@"#"];
@@ -475,7 +518,13 @@
       // attach the hash
       url = [url stringByAppendingString:href];
       // and load it
-      [self.webView loadRequest: [NSURLRequest requestWithURL:[NSURL URLWithString:url]]];
+      NSURLRequest *urlRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
+      
+      if (self.wkWebView != nil) {
+        [self.wkWebView loadRequest: urlRequest];
+      } else {
+        [self.webView loadRequest: urlRequest];
+      }
     }
   }
   return YES;
