@@ -463,7 +463,7 @@
 }
 
 - (BOOL) loadHrefIfPassed:(NSString*) href {
-  if (href != nil && href != [NSNull null]) {
+  if (href != nil && ![href isEqual:[NSNull null]]) {
     if (![href hasPrefix:@"#"] && [href rangeOfString:@".html"].location != NSNotFound) {
       // strip any params when looking for the file on the filesystem
       NSString *bareFileName = href;
@@ -474,14 +474,22 @@
         bareFileName = [href substringToIndex:range.location+5];
         urlParams = [href substringFromIndex:range.location+5];
       }
-      NSString *filePath = [self.commandDelegate pathForResource:bareFileName];
-      if (filePath == nil) {
-        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"file not found"];
-        [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
-        return NO;
+      NSURL *url;
+      if (self.wkWebView != nil) {
+        NSString *filePath = bareFileName;
+        NSString *replaceWith = [@"/" stringByAppendingString:bareFileName];
+        filePath = [self.wkWebView.URL.absoluteString stringByReplacingOccurrencesOfString:self.wkWebView.URL.path withString:replaceWith];
+        url = [NSURL URLWithString:filePath];
+      } else {
+        NSString *filePath = [self.commandDelegate pathForResource:bareFileName];
+        if (filePath == nil) {
+          CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"file not found"];
+          [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
+          return NO;
+        }
+        url = [NSURL fileURLWithPath: filePath];
       }
-      
-      NSURL *url = [NSURL fileURLWithPath: filePath];
+
       // re-attach the params when loading the url
       if (urlParams != nil) {
         NSString *absoluteURLString = [url absoluteString];
