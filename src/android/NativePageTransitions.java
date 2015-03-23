@@ -466,6 +466,7 @@ public class NativePageTransitions extends CordovaPlugin {
                     }
                   }, 20);
                 }
+                bringToFront(webView);
                 _callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
               }
 
