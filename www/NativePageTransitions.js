@@ -106,6 +106,9 @@ NativePageTransitions.prototype.fade = function (options, onSuccess, onError) {
   if (opts.duration == undefined || opts.duration == "null") {
     opts.duration = this.globalOptions.duration;
   }
+  if (opts.androiddelay == undefined || opts.androiddelay == "null") {
+    opts.androiddelay = this.globalOptions.androiddelay;
+  }
   if (opts.iosdelay == undefined || opts.iosdelay == "null") {
     opts.iosdelay = this.globalOptions.iosdelay;
   }
