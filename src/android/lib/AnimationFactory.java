@@ -307,7 +307,7 @@ public class AnimationFactory {
 	 * @return a fade animation that will set the visibility of the view at the start and end of animation
 	 */
 	public static Animation fadeInAnimation(long duration, final View view) {
-		Animation animation = fadeInAnimation(500, 0);
+		Animation animation = fadeInAnimation(duration, 0);
 
 	    animation.setAnimationListener(new AnimationListener() {
 			@Override
@@ -336,7 +336,7 @@ public class AnimationFactory {
 	 */
 	public static Animation fadeOutAnimation(long duration, final View view) {
 
-		Animation animation = fadeOutAnimation(500, 0);
+		Animation animation = fadeOutAnimation(duration, 0);
 
 	    animation.setAnimationListener(new AnimationListener() {
 			@Override

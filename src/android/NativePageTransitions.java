@@ -60,6 +60,8 @@ public class NativePageTransitions extends CordovaPlugin {
       super.onPageFinished(view, url);
       if ("slide".equalsIgnoreCase(_action)) {
         doSlideTransition();
+      } else if ("fade".equalsIgnoreCase(_action)) {
+        doFadeTransition();
       } else if ("flip".equalsIgnoreCase(_action)) {
         doFlipTransition();
       } else if ("drawer".equalsIgnoreCase(_action)) {
@@ -250,6 +252,41 @@ public class NativePageTransitions extends CordovaPlugin {
         }
       });
 
+    } else if ("fade".equalsIgnoreCase(action)) {
+
+      duration = json.getLong("duration");
+      delay = json.getLong("androiddelay");
+
+      cordova.getActivity().runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          webView.setDrawingCacheEnabled(true);
+          Bitmap bitmap = Bitmap.createBitmap(webView.getDrawingCache());
+          if (Build.VERSION.SDK_INT >= 12) {
+            bitmap.setHasAlpha(false);
+          }
+          webView.setDrawingCacheEnabled(false);
+          imageView.setImageBitmap(bitmap);
+          bringToFront(imageView);
+
+          if (href != null && !"null".equals(href)) {
+            if (!href.startsWith("#") && href.contains(".html")) {
+              webView.loadUrlIntoView(HREF_PREFIX + href, false);
+            } else {
+              // it's a #hash
+              String url = webView.getUrl();
+              // strip any existing hash
+              if (url.contains("#")) {
+                url = url.substring(0, url.indexOf("#"));
+              }
+              webView.loadUrlIntoView(url + href, false);
+            }
+          } else {
+            doFadeTransition();
+          }
+        }
+      });
+
     } else if ("flip".equalsIgnoreCase(action)) {
 
       duration = json.getLong("duration");
@@ -286,6 +323,69 @@ public class NativePageTransitions extends CordovaPlugin {
       });
     }
     return true;
+  }
+
+  private void doFadeTransition() {
+    if (!calledFromJS || this._callbackContext.getCallbackId().equals(lastCallbackID)) {
+      return;
+    }
+    lastCallbackID = this._callbackContext.getCallbackId();
+
+    new Timer().schedule(new TimerTask() {
+      public void run() {
+        // manipulations of the imageView need to be done by the same thread
+        // as the one that created it - the uithread in this case
+        cordova.getActivity().runOnUiThread(new Runnable() {
+          @Override
+          public void run() {
+
+            final Animation[] animations = new Animation[] {
+                AnimationFactory.fadeOutAnimation(duration, imageView),
+                AnimationFactory.fadeInAnimation(duration, webView)
+            };
+
+            animations[0].setAnimationListener(new Animation.AnimationListener() {
+              @Override
+              public void onAnimationStart(Animation animation) {
+              }
+
+              @Override
+              public void onAnimationEnd(Animation animation) {
+                bringToFront(webView);
+//                animation.reset();
+                webView.clearAnimation();
+                _callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
+              }
+
+              @Override
+              public void onAnimationRepeat(Animation animation) {
+              }
+            });
+            animations[1].setAnimationListener(new Animation.AnimationListener() {
+              @Override
+              public void onAnimationStart(Animation animation) {
+              }
+
+              @Override
+              public void onAnimationEnd(Animation animation) {
+                imageView.setImageBitmap(null);
+//                animation.reset();
+                imageView.clearAnimation();
+              }
+
+              @Override
+              public void onAnimationRepeat(Animation animation) {
+              }
+            });
+
+            imageView.startAnimation(animations[0]);
+            webView.startAnimation(animations[1]);
+
+            calledFromJS = false;
+          }
+        });
+      }
+    }, delay);
   }
 
   private void doFlipTransition() {
