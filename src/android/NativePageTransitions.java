@@ -11,7 +11,6 @@ import android.view.animation.AlphaAnimation;
 import android.view.animation.Animation;
 import android.view.animation.AnimationSet;
 import android.view.animation.TranslateAnimation;
-import android.webkit.WebView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import com.telerik.plugins.nativepagetransitions.lib.AnimationFactory;
@@ -50,14 +49,8 @@ public class NativePageTransitions extends CordovaPlugin {
   // this plugin listens to page changes, so only kick in a transition when it was actually requested by the JS bridge
   private String lastCallbackID;
 
-  class MyCordovaWebViewClient extends CordovaWebViewClient {
-    public MyCordovaWebViewClient(CordovaInterface cordova, CordovaWebView view) {
-      super(cordova, view);
-    }
-
-    @Override
-    public void onPageFinished(WebView view, String url) {
-      super.onPageFinished(view, url);
+  public Object onMessage(String id, Object data) {
+    if ("onPageFinished".equalsIgnoreCase(id)) {
       if ("slide".equalsIgnoreCase(_action)) {
         doSlideTransition();
       } else if ("fade".equalsIgnoreCase(_action)) {
@@ -68,14 +61,25 @@ public class NativePageTransitions extends CordovaPlugin {
         doDrawerTransition();
       }
     }
+    return super.onMessage(id, data);
+  }
+
+  // Helper to be compile-time compatible with both Cordova 3.x and 4.x.
+  private View cachedView;
+  private View getView() {
+    if (cachedView == null) {
+      try {
+        cachedView = (View) webView.getClass().getMethod("getView").invoke(webView);
+      } catch (Exception e) {
+        cachedView = (View) webView;
+      }
+    }
+    return cachedView;
   }
 
   @Override
   public void initialize(CordovaInterface cordova, CordovaWebView webView) {
     super.initialize(cordova, webView);
-    // required when a href is passed to better control the transition timing
-    // TODO may be replaced by a 'load' listener (but that doesnt work for hashnav)
-    webView.setWebViewClient(new MyCordovaWebViewClient(cordova, webView));
     imageView = new ImageView(cordova.getActivity().getBaseContext());
     imageView2 = new ImageView(cordova.getActivity().getBaseContext());
 
@@ -84,14 +88,13 @@ public class NativePageTransitions extends CordovaPlugin {
     enableHardwareAcceleration();
 
     layout = new FrameLayout(cordova.getActivity());
-//    layout = new ViewAnimator(cordova.getActivity());
-    layout.setLayoutParams(webView.getLayoutParams());
-    ViewGroup vg = (ViewGroup) webView.getParent();
+    layout.setLayoutParams(getView().getLayoutParams());
+    ViewGroup vg = (ViewGroup) getView().getParent();
     if (vg != null) {
-      vg.addView(layout, webView.getLayoutParams());
-      vg.removeView(webView);
+      vg.addView(layout, getView().getLayoutParams());
+      vg.removeView(getView());
     }
-    layout.addView(webView);
+    layout.addView(getView());
     layout.addView(imageView);
     layout.addView(imageView2);
 
@@ -144,12 +147,12 @@ public class NativePageTransitions extends CordovaPlugin {
       cordova.getActivity().runOnUiThread(new Runnable() {
         @Override
         public void run() {
-          webView.setDrawingCacheEnabled(true);
-          Bitmap bitmap = Bitmap.createBitmap(webView.getDrawingCache());
+          getView().setDrawingCacheEnabled(true);
+          Bitmap bitmap = Bitmap.createBitmap(getView().getDrawingCache());
           if (Build.VERSION.SDK_INT >= 12) {
             bitmap.setHasAlpha(false);
           }
-          webView.setDrawingCacheEnabled(false);
+          getView().setDrawingCacheEnabled(false);
           imageView.setImageBitmap(bitmap);
           bringToFront(imageView);
 
@@ -175,13 +178,8 @@ public class NativePageTransitions extends CordovaPlugin {
             if (!href.startsWith("#") && href.contains(".html")) {
               webView.loadUrlIntoView(HREF_PREFIX + href, false);
             } else {
-              // it's a #hash
-              String url = webView.getUrl();
-              // strip any existing hash
-              if (url.contains("#")) {
-                url = url.substring(0, url.indexOf("#"));
-              }
-              webView.loadUrlIntoView(url + href, false);
+              // it's a #hash, which is handled in JS
+              doSlideTransition();
             }
           } else {
             doSlideTransition();
@@ -192,7 +190,7 @@ public class NativePageTransitions extends CordovaPlugin {
     } else if ("drawer".equalsIgnoreCase(action)) {
 
       if (drawerNonOverlappingSpace == 0) {
-        drawerNonOverlappingSpace = webView.getWidth()/8;
+        drawerNonOverlappingSpace = getView().getWidth()/8;
       }
       duration = json.getLong("duration");
       drawerAction = json.getString("action");
@@ -202,16 +200,12 @@ public class NativePageTransitions extends CordovaPlugin {
       cordova.getActivity().runOnUiThread(new Runnable() {
         @Override
         public void run() {
-//          if ("close".equals(drawerAction)) {
-//            bringToFront(webView);
-//          }
-
-          webView.setDrawingCacheEnabled(true);
+          getView().setDrawingCacheEnabled(true);
           Bitmap bitmap;
           if ("open".equals(drawerAction)) {
-            bitmap = Bitmap.createBitmap(webView.getDrawingCache());
+            bitmap = Bitmap.createBitmap(getView().getDrawingCache());
           } else {
-            bitmap = Bitmap.createBitmap(webView.getDrawingCache(), "left".equals(drawerOrigin) ? 0 : drawerNonOverlappingSpace, 0, webView.getWidth()- drawerNonOverlappingSpace, webView.getHeight());
+            bitmap = Bitmap.createBitmap(getView().getDrawingCache(), "left".equals(drawerOrigin) ? 0 : drawerNonOverlappingSpace, 0, getView().getWidth()- drawerNonOverlappingSpace, getView().getHeight());
             if ("left".equals(drawerOrigin)) {
               if (Build.VERSION.SDK_INT >= 11) {
                 imageView2.setX(-drawerNonOverlappingSpace / 2);
@@ -225,7 +219,7 @@ public class NativePageTransitions extends CordovaPlugin {
           if (Build.VERSION.SDK_INT >= 12) {
             bitmap.setHasAlpha(false);
           }
-          webView.setDrawingCacheEnabled(false);
+          getView().setDrawingCacheEnabled(false);
           if ("open".equals(drawerAction)) {
             imageView.setImageBitmap(bitmap);
             bringToFront(imageView);
@@ -238,13 +232,8 @@ public class NativePageTransitions extends CordovaPlugin {
             if (!href.startsWith("#") && href.contains(".html")) {
               webView.loadUrlIntoView(HREF_PREFIX + href, false);
             } else {
-              // it's a #hash
-              String url = webView.getUrl();
-              // strip any existing hash
-              if (url.contains("#")) {
-                url = url.substring(0, url.indexOf("#"));
-              }
-              webView.loadUrlIntoView(url + href, false);
+              // it's a #hash, which is handled in JS
+              doDrawerTransition();
             }
           } else {
             doDrawerTransition();
@@ -260,12 +249,12 @@ public class NativePageTransitions extends CordovaPlugin {
       cordova.getActivity().runOnUiThread(new Runnable() {
         @Override
         public void run() {
-          webView.setDrawingCacheEnabled(true);
-          Bitmap bitmap = Bitmap.createBitmap(webView.getDrawingCache());
+          getView().setDrawingCacheEnabled(true);
+          Bitmap bitmap = Bitmap.createBitmap(getView().getDrawingCache());
           if (Build.VERSION.SDK_INT >= 12) {
             bitmap.setHasAlpha(false);
           }
-          webView.setDrawingCacheEnabled(false);
+          getView().setDrawingCacheEnabled(false);
           imageView.setImageBitmap(bitmap);
           bringToFront(imageView);
 
@@ -273,13 +262,8 @@ public class NativePageTransitions extends CordovaPlugin {
             if (!href.startsWith("#") && href.contains(".html")) {
               webView.loadUrlIntoView(HREF_PREFIX + href, false);
             } else {
-              // it's a #hash
-              String url = webView.getUrl();
-              // strip any existing hash
-              if (url.contains("#")) {
-                url = url.substring(0, url.indexOf("#"));
-              }
-              webView.loadUrlIntoView(url + href, false);
+              // it's a #hash, which is handled in JS
+              doFadeTransition();
             }
           } else {
             doFadeTransition();
@@ -296,25 +280,20 @@ public class NativePageTransitions extends CordovaPlugin {
       cordova.getActivity().runOnUiThread(new Runnable() {
         @Override
         public void run() {
-          webView.setDrawingCacheEnabled(true);
-          Bitmap bitmap = Bitmap.createBitmap(webView.getDrawingCache());
+          getView().setDrawingCacheEnabled(true);
+          Bitmap bitmap = Bitmap.createBitmap(getView().getDrawingCache());
           if (Build.VERSION.SDK_INT >= 12) {
             bitmap.setHasAlpha(false);
           }
-          webView.setDrawingCacheEnabled(false);
+          getView().setDrawingCacheEnabled(false);
           imageView.setImageBitmap(bitmap);
 
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
               webView.loadUrlIntoView(HREF_PREFIX + href, false);
             } else {
-              // it's a #hash
-              String url = webView.getUrl();
-              // strip any existing hash
-              if (url.contains("#")) {
-                url = url.substring(0, url.indexOf("#"));
-              }
-              webView.loadUrlIntoView(url + href, false);
+              // it's a #hash, which is handled in JS
+              doFlipTransition();
             }
           } else {
             doFlipTransition();
@@ -341,7 +320,7 @@ public class NativePageTransitions extends CordovaPlugin {
 
             final Animation[] animations = new Animation[] {
                 AnimationFactory.fadeOutAnimation(duration, imageView),
-                AnimationFactory.fadeInAnimation(duration, webView)
+                AnimationFactory.fadeInAnimation(duration, getView())
             };
 
             animations[0].setAnimationListener(new Animation.AnimationListener() {
@@ -351,9 +330,9 @@ public class NativePageTransitions extends CordovaPlugin {
 
               @Override
               public void onAnimationEnd(Animation animation) {
-                bringToFront(webView);
+                bringToFront(getView());
 //                animation.reset();
-                webView.clearAnimation();
+                getView().clearAnimation();
                 _callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
               }
 
@@ -379,7 +358,7 @@ public class NativePageTransitions extends CordovaPlugin {
             });
 
             imageView.startAnimation(animations[0]);
-            webView.startAnimation(animations[1]);
+            getView().startAnimation(animations[1]);
 
             calledFromJS = false;
           }
@@ -413,7 +392,7 @@ public class NativePageTransitions extends CordovaPlugin {
               flipDirection = AnimationFactory.FlipDirection.LEFT_RIGHT;
             }
 
-            final Animation[] animations = AnimationFactory.flipAnimation(imageView, webView, flipDirection, duration, null);
+            final Animation[] animations = AnimationFactory.flipAnimation(imageView, getView(), flipDirection, duration, null);
 
             animations[0].setAnimationListener(new Animation.AnimationListener() {
               @Override
@@ -439,7 +418,7 @@ public class NativePageTransitions extends CordovaPlugin {
               @Override
               public void onAnimationEnd(Animation animation) {
                 animation.reset();
-                webView.clearAnimation();
+                getView().clearAnimation();
                 _callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
               }
 
@@ -449,7 +428,7 @@ public class NativePageTransitions extends CordovaPlugin {
             });
 
             imageView.startAnimation(animations[0]);
-            webView.startAnimation(animations[1]);
+            getView().startAnimation(animations[1]);
 
             calledFromJS = false;
           }
@@ -479,7 +458,7 @@ public class NativePageTransitions extends CordovaPlugin {
             int webviewSlowdownFactor = 1;
 
             if ("left".equals(direction)) {
-              bringToFront(webView);
+              bringToFront(getView());
               transitionToX = -1;
               screenshotSlowdownFactor = slowdownfactor;
             } else if ("right".equals(direction)) {
@@ -487,13 +466,13 @@ public class NativePageTransitions extends CordovaPlugin {
               transitionToX = 1;
               webviewSlowdownFactor = slowdownfactor;
             } else if ("up".equals(direction)) {
-              bringToFront(webView);
-              transitionToY = -webView.getHeight();
+              bringToFront(getView());
+              transitionToY = -getView().getHeight();
               translateAnimationY = TranslateAnimation.ABSOLUTE;
               screenshotSlowdownFactor = slowdownfactor;
             } else if ("down".equals(direction)) {
               bringToFront(imageView);
-              transitionToY = webView.getHeight();
+              transitionToY = getView().getHeight();
               translateAnimationY = TranslateAnimation.ABSOLUTE;
               webviewSlowdownFactor = slowdownfactor;
             }
@@ -566,7 +545,7 @@ public class NativePageTransitions extends CordovaPlugin {
                     }
                   }, 20);
                 }
-                bringToFront(webView);
+                bringToFront(getView());
                 _callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
               }
 
@@ -576,14 +555,14 @@ public class NativePageTransitions extends CordovaPlugin {
             });
 
             imageView.setAnimation(imageViewAnimation);
-            webView.setAnimation(webViewAnimation);
+            getView().setAnimation(webViewAnimation);
             layout.startLayoutAnimation();
 
             if (BEFORE_KITKAT) {
               // This fixes an issue observed on a Samsung Galaxy S3 /w Android 4.3 where the img is shown,
               // but the transition doesn't kick in unless the screen is touched again.
               imageView.requestFocusFromTouch();
-              webView.requestFocus();
+              getView().requestFocus();
             }
 
             calledFromJS = false;
@@ -607,7 +586,7 @@ public class NativePageTransitions extends CordovaPlugin {
           @Override
           public void run() {
 
-            float width = webView.getWidth();
+            float width = getView().getWidth();
             float transitionToX = 0;
             float transitionFromX = 0;
 
@@ -662,12 +641,12 @@ public class NativePageTransitions extends CordovaPlugin {
                   cordova.getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                      bringToFront(webView);
+                      bringToFront(getView());
                     }
                   });
                 }
               }, 80);
-              webView.setAnimation(animation);
+              getView().setAnimation(animation);
               layout.startLayoutAnimation();
             }
             calledFromJS = false;
@@ -691,7 +670,7 @@ public class NativePageTransitions extends CordovaPlugin {
           WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
       imageView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
       if (BEFORE_KITKAT) {
-        webView.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+        getView().setLayerType(View.LAYER_TYPE_SOFTWARE, null);
       }
     }
   }

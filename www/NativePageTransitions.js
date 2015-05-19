@@ -119,10 +119,16 @@ NativePageTransitions.prototype._validateHref = function (href, errCallback) {
   var currentHref = window.location.href.substr(window.location.href.indexOf('www/')+4);
   // if no href was passed the transition should always kick in
   if (href) {
-    if (href.indexOf('#') == 0) {
+    // if only hash nav, do it in JS for Android
+    // (I'm a little reluctant to depend on 'device' only for this: device.platform == "Android")
+    if (href.indexOf('#') == 0 && navigator.userAgent.indexOf("Android") > -1) {
       // starts with a #, so check if the current one has a hash with the same value
       if (currentHref.indexOf('#') > -1) {
-        currentHref = currentHref.substr(currentHref.indexOf('#'));
+        var file = currentHref.substr(0, currentHref.indexOf('#'));
+        window.location.href = "/android_asset/www/"+file+ href;
+      } else {
+        // the current page has no #, so simply attach the href to current url
+        window.location = window.location.href += href;
       }
     }
   }
