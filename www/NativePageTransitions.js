@@ -116,7 +116,16 @@ NativePageTransitions.prototype.fade = function (options, onSuccess, onError) {
 };
 
 NativePageTransitions.prototype._validateHref = function (href, errCallback) {
-  var currentHref = window.location.href.substr(window.location.href.indexOf('www/')+4);
+  // if not contains www/ : dan zit je in een companion app..
+  var hrf = window.location.href;
+  var currentHref;
+  if (hrf.indexOf('www/') == -1) {
+    console.log('Probably running inside a companion app, your app may crash if your html file is not in the root!');
+    // hrf is something like file:///data/.../index.html
+    currentHref = hrf.substr(hrf.lastIndexOf('/')+1);
+  } else {
+    currentHref = hrf.substr(hrf.indexOf('www/')+4);
+  }
   // if no href was passed the transition should always kick in
   if (href) {
     // if only hash nav, do it in JS for Android
@@ -125,10 +134,15 @@ NativePageTransitions.prototype._validateHref = function (href, errCallback) {
       // starts with a #, so check if the current one has a hash with the same value
       if (currentHref.indexOf('#') > -1) {
         var file = currentHref.substr(0, currentHref.indexOf('#'));
-        window.location.href = "/android_asset/www/"+file+ href;
+        if (hrf.indexOf('www/') == -1) {
+          var to = hrf.substr(0, hrf.lastIndexOf('/')+1);
+          window.location.href = to+file+href;
+        } else {
+          window.location.href = "/android_asset/www/"+file+ href;
+        }
       } else {
         // the current page has no #, so simply attach the href to current url
-        window.location = window.location.href += href;
+        window.location = hrf += href;
       }
     }
   }
