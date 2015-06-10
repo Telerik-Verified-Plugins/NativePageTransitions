@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.os.Build;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
+import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -48,6 +49,15 @@ public class NativePageTransitions extends CordovaPlugin {
   private static final String HREF_PREFIX = "file:///android_asset/www/";
   // this plugin listens to page changes, so only kick in a transition when it was actually requested by the JS bridge
   private String lastCallbackID;
+  private static boolean isCrosswalk;
+
+  static {
+    try {
+      Class.forName("org.crosswalk.engine.XWalkWebViewEngine");
+      isCrosswalk = true;
+    } catch (Exception e) {
+    }
+  }
 
   public Object onMessage(String id, Object data) {
     if ("onPageFinished".equalsIgnoreCase(id)) {
@@ -147,12 +157,7 @@ public class NativePageTransitions extends CordovaPlugin {
       cordova.getActivity().runOnUiThread(new Runnable() {
         @Override
         public void run() {
-          getView().setDrawingCacheEnabled(true);
-          Bitmap bitmap = Bitmap.createBitmap(getView().getDrawingCache());
-          if (Build.VERSION.SDK_INT >= 12) {
-            bitmap.setHasAlpha(false);
-          }
-          getView().setDrawingCacheEnabled(false);
+          Bitmap bitmap = getBitmap();
           imageView.setImageBitmap(bitmap);
           bringToFront(imageView);
 
@@ -200,11 +205,12 @@ public class NativePageTransitions extends CordovaPlugin {
       cordova.getActivity().runOnUiThread(new Runnable() {
         @Override
         public void run() {
-          getView().setDrawingCacheEnabled(true);
           Bitmap bitmap;
           if ("open".equals(drawerAction)) {
-            bitmap = Bitmap.createBitmap(getView().getDrawingCache());
+            bitmap = getBitmap();
           } else {
+            // TODO Crosswalk compat
+            getView().setDrawingCacheEnabled(true);
             bitmap = Bitmap.createBitmap(getView().getDrawingCache(), "left".equals(drawerOrigin) ? 0 : drawerNonOverlappingSpace, 0, getView().getWidth()- drawerNonOverlappingSpace, getView().getHeight());
             if ("left".equals(drawerOrigin)) {
               if (Build.VERSION.SDK_INT >= 11) {
@@ -215,11 +221,11 @@ public class NativePageTransitions extends CordovaPlugin {
                 imageView2.setX(drawerNonOverlappingSpace / 2);
               }
             }
+            if (Build.VERSION.SDK_INT >= 12) {
+              bitmap.setHasAlpha(false);
+            }
+            getView().setDrawingCacheEnabled(false);
           }
-          if (Build.VERSION.SDK_INT >= 12) {
-            bitmap.setHasAlpha(false);
-          }
-          getView().setDrawingCacheEnabled(false);
           if ("open".equals(drawerAction)) {
             imageView.setImageBitmap(bitmap);
             bringToFront(imageView);
@@ -249,13 +255,7 @@ public class NativePageTransitions extends CordovaPlugin {
       cordova.getActivity().runOnUiThread(new Runnable() {
         @Override
         public void run() {
-          getView().setDrawingCacheEnabled(true);
-          Bitmap bitmap = Bitmap.createBitmap(getView().getDrawingCache());
-          if (Build.VERSION.SDK_INT >= 12) {
-            bitmap.setHasAlpha(false);
-          }
-          getView().setDrawingCacheEnabled(false);
-          imageView.setImageBitmap(bitmap);
+          imageView.setImageBitmap(getBitmap());
           bringToFront(imageView);
 
           if (href != null && !"null".equals(href)) {
@@ -280,14 +280,7 @@ public class NativePageTransitions extends CordovaPlugin {
       cordova.getActivity().runOnUiThread(new Runnable() {
         @Override
         public void run() {
-          getView().setDrawingCacheEnabled(true);
-          Bitmap bitmap = Bitmap.createBitmap(getView().getDrawingCache());
-          if (Build.VERSION.SDK_INT >= 12) {
-            bitmap.setHasAlpha(false);
-          }
-          getView().setDrawingCacheEnabled(false);
-          imageView.setImageBitmap(bitmap);
-
+          imageView.setImageBitmap(getBitmap());
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
               webView.loadUrlIntoView(HREF_PREFIX + href, false);
@@ -661,6 +654,46 @@ public class NativePageTransitions extends CordovaPlugin {
     if (requiresRedraw) {
       view.requestLayout();
     }
+  }
+
+  private Bitmap getBitmap() {
+    Bitmap bitmap = null;
+    if (isCrosswalk) {
+      try {
+        TextureView textureView = findCrosswalkTextureView((ViewGroup) getView());
+        bitmap = textureView.getBitmap();
+      } catch(Exception e) {
+      }
+    } else {
+      View view = getView();
+      view.setDrawingCacheEnabled(true);
+      bitmap = Bitmap.createBitmap(view.getDrawingCache());
+      if (Build.VERSION.SDK_INT >= 12) {
+        bitmap.setHasAlpha(false);
+      }
+      view.setDrawingCacheEnabled(false);
+    }
+    return bitmap;
+  }
+
+  private TextureView findCrosswalkTextureView(ViewGroup group) {
+    int childCount = group.getChildCount();
+    for(int i=0;i<childCount;i++) {
+      View child = group.getChildAt(i);
+      if(child instanceof TextureView) {
+        String parentClassName = child.getParent().getClass().toString();
+        boolean isRightKindOfParent = (parentClassName.contains("XWalk"));
+        if(isRightKindOfParent) {
+          return (TextureView) child;
+        }
+      } else if(child instanceof ViewGroup) {
+        TextureView textureView = findCrosswalkTextureView((ViewGroup) child);
+        if(textureView != null) {
+          return textureView;
+        }
+      }
+    }
+    return null;
   }
 
   private void enableHardwareAcceleration() {
