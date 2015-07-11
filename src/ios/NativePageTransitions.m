@@ -72,7 +72,9 @@
     width = height;
     height = temp;
   }
-  
+
+  screenshotRect.size.height -= _webViewPushedDownPixels == 40 ? 20 : 0;
+
   CGFloat transitionToX = 0;
   CGFloat transitionToY = 0;
   CGFloat webviewFromY = _nonWebViewHeight;
@@ -468,31 +470,31 @@
     NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
     NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
     NSString *href = [args objectForKey:@"href"];
-    
+
     // duration is passed in ms, but needs to be in sec here
     duration = duration / 1000;
-    
+
     // overlay the webview with a screenshot to prevent the user from seeing changes in the webview before the fade kicks in
     CGSize viewSize = self.viewController.view.bounds.size;
-    
+
     UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0);
     [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
-    
+
     // Read the UIImage object
     UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
-    
+
     CGFloat width = self.viewController.view.frame.size.width;
     CGFloat height = self.viewController.view.frame.size.height;
     [_screenShotImageView setFrame:CGRectMake(0, 0, width, height)];
-    
+
     _screenShotImageView = [[UIImageView alloc]initWithFrame:[self.viewController.view.window frame]];
     [_screenShotImageView setImage:image];
     [self.transitionView.superview insertSubview:_screenShotImageView aboveSubview:self.transitionView];
-    
+
     UIViewAnimationOptions animationOptions;
     animationOptions = UIViewAnimationOptionTransitionCrossDissolve;
-    
+
     if ([self loadHrefIfPassed:href]) {
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
             // remove the screenshot halfway during the transition

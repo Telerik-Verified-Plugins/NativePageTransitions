@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
 				id="com.telerik.plugins.nativepagetransitions"
-				version="0.4.1">
+				version="0.4.2-dev">
 
 	<name>Native Page Transitions</name>
 
@@ -36,6 +36,8 @@
 		</config-file>
 		<header-file src="src/ios/NativePageTransitions.h"/>
 		<source-file src="src/ios/NativePageTransitions.m"/>
+		<header-file src="src/ios/AppDelegate+nativepagetransitions.h"/>
+		<source-file src="src/ios/AppDelegate+nativepagetransitions.m"/>
 	</platform>
 
 	<!-- android -->

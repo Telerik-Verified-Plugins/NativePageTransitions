@@ -11,6 +11,7 @@
 @property (strong, nonatomic) IBOutlet UIView *transitionView;
 @property (strong, nonatomic) IBOutlet WKWebView *wkWebView;
 @property (nonatomic, assign) int nonWebViewHeight;
+@property (nonatomic, assign) int webViewPushedDownPixels;
 
 - (void) slide:(CDVInvokedUrlCommand*)command;
 - (void) drawer:(CDVInvokedUrlCommand*)command;
