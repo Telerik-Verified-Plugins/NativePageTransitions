@@ -142,6 +142,9 @@ NativePageTransitions.prototype._validateHref = function (href, errCallback) {
         }
       } else {
         // the current page has no #, so simply attach the href to current url
+        if (hrf.indexOf('#') > -1) {
+          hrf = hrf.substring(0, hrf.indexOf('#'));
+        }
         window.location = hrf += href;
       }
     }
