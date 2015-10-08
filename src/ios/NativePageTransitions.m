@@ -38,14 +38,29 @@
   [super dispose];
 }
 
+- (void) executePendingTransition:(CDVInvokedUrlCommand*)command {
+  if (_slideOptions != nil) {
+    [self performSlideTransition];
+
+    // TODO other transitions
+//  } else if (_flipOptions != nil) {
+//    [self performFlipTransition];
+  }
+}
+
+
 - (void) slide:(CDVInvokedUrlCommand*)command {
+  // make sure incorrect usage doesn't leave artifacts (call setup, then slide with delay >= 0)
+  if (_slideOptions != nil) {
+    [_screenShotImageView removeFromSuperview];
+    [_screenShotImageViewTop removeFromSuperview];
+    [_screenShotImageViewBottom removeFromSuperview];
+  }
+
   _command = command;
   NSMutableDictionary *args = [command.arguments objectAtIndex:0];
   NSString *direction = [args objectForKey:@"direction"];
-  NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
-  NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
   NSString *href = [args objectForKey:@"href"];
-  NSNumber *slowdownfactor = [args objectForKey:@"slowdownfactor"];
   NSNumber *fixedPixelsTopNum = [args objectForKey:@"fixedPixelsTop"];
   NSNumber *fixedPixelsBottomNum = [args objectForKey:@"fixedPixelsBottom"];
   int fixedPixelsTop = [fixedPixelsTopNum intValue];
@@ -53,11 +68,6 @@
   
   self.viewController.view.backgroundColor = [UIColor blackColor];
   self.transitionView.layer.shadowOpacity = 0;
-  
-  // duration/delay is passed in ms, but needs to be in sec here
-  duration = duration / 1000;
-  delay = delay / 1000;
-  CGFloat lowerLayerAlpha = 0.4f; // TODO consider passing in
   
   //  CGFloat totalHeight = self.viewController.view.frame.size.height;
   CGFloat width = self.viewController.view.frame.size.width;
@@ -75,30 +85,6 @@
 
   screenshotRect.size.height -= _webViewPushedDownPixels == 40 ? 20 : 0;
 
-  CGFloat transitionToX = 0;
-  CGFloat transitionToY = 0;
-  CGFloat webviewFromY = _nonWebViewHeight;
-  CGFloat webviewToY = _nonWebViewHeight;
-  int screenshotSlowdownFactor = 1;
-  int webviewSlowdownFactor = 1;
-  
-  if ([direction isEqualToString:@"left"]) {
-    transitionToX = -width;
-    screenshotSlowdownFactor = [slowdownfactor intValue];
-  } else if ([direction isEqualToString:@"right"]) {
-    transitionToX = width;
-    webviewSlowdownFactor = [slowdownfactor intValue];
-  } else if ([direction isEqualToString:@"up"]) {
-    screenshotSlowdownFactor = [slowdownfactor intValue];
-    transitionToY = (-height/screenshotSlowdownFactor)+_nonWebViewHeight;
-    webviewToY = _nonWebViewHeight;
-    webviewFromY = height/webviewSlowdownFactor;
-  } else if ([direction isEqualToString:@"down"]) {
-    transitionToY = (height/screenshotSlowdownFactor)+_nonWebViewHeight;
-    webviewSlowdownFactor = [slowdownfactor intValue];
-    webviewFromY = (-height/webviewSlowdownFactor)+_nonWebViewHeight;
-  }
-  
   CGSize viewSize = self.viewController.view.bounds.size;
 
   UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0);
@@ -157,16 +143,73 @@
   }
   
   if ([self loadHrefIfPassed:href]) {
+    // pass in -1 for manual (requires you to call executePendingTransition)
+    NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
+    _slideOptions = args;
+    if (delay < 0) {
+      CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+      [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+      return;
+    } else {
+      [self performSlideTransition];
+    }
+  }
+}
+
+- (void) performSlideTransition {
+  NSMutableDictionary *args = _slideOptions;
+  _slideOptions = nil;
+  NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
+  // duration/delay is passed in ms, but needs to be in sec here
+  duration = duration / 1000;
+  CGFloat lowerLayerAlpha = 0.4f; // TODO consider passing in
+  NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue]; // pass in -1 for manual (requires you to call executePendingTransition)
+  if (delay < 0) {
+    delay = 0;
+  }
+  delay = delay / 1000;
+  
+  NSString *direction = [args objectForKey:@"direction"];
+  NSNumber *slowdownfactor = [args objectForKey:@"slowdownfactor"];
+  
+  CGFloat transitionToX = 0;
+  CGFloat transitionToY = 0;
+  CGFloat webviewFromY = _nonWebViewHeight;
+  CGFloat webviewToY = _nonWebViewHeight;
+  int screenshotSlowdownFactor = 1;
+  int webviewSlowdownFactor = 1;
+  
+  CGFloat width = self.viewController.view.frame.size.width;
+  CGFloat height = self.viewController.view.frame.size.height;
+
+  if ([direction isEqualToString:@"left"]) {
+    transitionToX = -width;
+    screenshotSlowdownFactor = [slowdownfactor intValue];
+  } else if ([direction isEqualToString:@"right"]) {
+    transitionToX = width;
+    webviewSlowdownFactor = [slowdownfactor intValue];
+  } else if ([direction isEqualToString:@"up"]) {
+    screenshotSlowdownFactor = [slowdownfactor intValue];
+    transitionToY = (-height/screenshotSlowdownFactor)+_nonWebViewHeight;
+    webviewToY = _nonWebViewHeight;
+    webviewFromY = height/webviewSlowdownFactor;
+  } else if ([direction isEqualToString:@"down"]) {
+    transitionToY = (height/screenshotSlowdownFactor)+_nonWebViewHeight;
+    webviewSlowdownFactor = [slowdownfactor intValue];
+    webviewFromY = (-height/webviewSlowdownFactor)+_nonWebViewHeight;
+  }
+  
+
     [UIView animateWithDuration:duration
                           delay:delay
-                        options:UIViewAnimationOptionCurveEaseInOut // TODO: allow passing in?
+                        options:UIViewAnimationOptionCurveEaseInOut
                      animations:^{
                        [_screenShotImageView setFrame:CGRectMake(transitionToX/screenshotSlowdownFactor, transitionToY, width, height)];
                      }
                      completion:^(BOOL finished) {
                        [_screenShotImageView removeFromSuperview];
                        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-                       [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+                       [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
                      }];
     
     // also, fade out the screenshot a bit to give it some depth
@@ -206,7 +249,6 @@
                        completion:^(BOOL finished) {
                        }];
     }
-  }
 }
 
 - (void) drawer:(CDVInvokedUrlCommand*)command {
@@ -470,31 +512,31 @@
     NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
     NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
     NSString *href = [args objectForKey:@"href"];
-
+    
     // duration is passed in ms, but needs to be in sec here
     duration = duration / 1000;
-
+    
     // overlay the webview with a screenshot to prevent the user from seeing changes in the webview before the fade kicks in
     CGSize viewSize = self.viewController.view.bounds.size;
-
+    
     UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0);
     [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
-
+    
     // Read the UIImage object
     UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
-
+    
     CGFloat width = self.viewController.view.frame.size.width;
     CGFloat height = self.viewController.view.frame.size.height;
     [_screenShotImageView setFrame:CGRectMake(0, 0, width, height)];
-
+    
     _screenShotImageView = [[UIImageView alloc]initWithFrame:[self.viewController.view.window frame]];
     [_screenShotImageView setImage:image];
     [self.transitionView.superview insertSubview:_screenShotImageView aboveSubview:self.transitionView];
-
+    
     UIViewAnimationOptions animationOptions;
     animationOptions = UIViewAnimationOptionTransitionCrossDissolve;
-
+    
     if ([self loadHrefIfPassed:href]) {
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
             // remove the screenshot halfway during the transition
