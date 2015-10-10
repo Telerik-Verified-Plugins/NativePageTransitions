@@ -3,12 +3,16 @@ function NativePageTransitions() {
 
 NativePageTransitions.prototype.globalOptions =  {
   duration: 400,
-  iosdelay: 60,
-  androiddelay: 70,
+  iosdelay: 60, // a number of milliseconds, or -1 (call executePendingTransition() when ready)
+  androiddelay: 70, // a number of milliseconds, or -1 (call executePendingTransition() when ready)
   winphonedelay: 200,
   slowdownfactor: 4,
   fixedPixelsTop: 0,    // currently for slide left/right only
   fixedPixelsBottom: 0  // currently for slide left/right only
+};
+
+NativePageTransitions.prototype.executePendingTransition = function (onSuccess, onError) {
+  cordova.exec(onSuccess, onError, "NativePageTransitions", "executePendingTransition", []);
 };
 
 NativePageTransitions.prototype.slide = function (options, onSuccess, onError) {
