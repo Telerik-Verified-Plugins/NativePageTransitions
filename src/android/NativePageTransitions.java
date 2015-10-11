@@ -120,6 +120,13 @@ public class NativePageTransitions extends CordovaPlugin {
     _action = action;
     _callbackContext = callbackContext;
 
+    if ("executePendingTransition".equalsIgnoreCase(action)) {
+      // TODO other transitions
+      delay = 0;
+      doSlideTransition();
+      return true;
+    }
+
     final JSONObject json = args.getJSONObject(0);
     final String href = json.isNull("href") ? null : json.getString("href");
 
@@ -144,9 +151,8 @@ public class NativePageTransitions extends CordovaPlugin {
 
     calledFromJS = true;
 
-    // TODO move effects to separate classes, and reuse a lot of code
+    // TODO move effects to separate classes, and reuse lots of code
     if ("slide".equalsIgnoreCase(action)) {
-
       duration = json.getLong("duration");
       direction = json.getString("direction");
       delay = json.getLong("androiddelay");
@@ -182,11 +188,11 @@ public class NativePageTransitions extends CordovaPlugin {
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
               webView.loadUrlIntoView(HREF_PREFIX + href, false);
-            } else {
+            } else if (delay > -1) {
               // it's a #hash, which is handled in JS
               doSlideTransition();
             }
-          } else {
+          } else if (delay > -1) {
             doSlideTransition();
           }
         }
