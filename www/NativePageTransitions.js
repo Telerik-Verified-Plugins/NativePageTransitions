@@ -163,7 +163,7 @@ function setupDelayOptions(opts, whichOS) {
     }
   }
   if (whichOS.ios) {
-    if (opts.iosdelay == undefined || opts.iosdelay == "null")) {
+    if (opts.iosdelay == undefined || opts.iosdelay == "null") {
       opts.iosdelay = globalOptions.iosdelay;
     } else if (typeof opts.iosdelay == 'function') {
       callbacks.push(opts.iosdelay);
