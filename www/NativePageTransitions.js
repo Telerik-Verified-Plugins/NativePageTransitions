@@ -162,8 +162,13 @@ function setupDelayOptions(opts, whichOS) {
       opts.androiddelay = -1;
     }
   }
-  if (whichOS.ios && (opts.iosdelay == undefined || opts.iosdelay == "null")) {
-    opts.iosdelay = globalOptions.iosdelay;
+  if (whichOS.ios) {
+    if (opts.iosdelay == undefined || opts.iosdelay == "null")) {
+      opts.iosdelay = globalOptions.iosdelay;
+    } else if (typeof opts.iosdelay == 'function') {
+      callbacks.push(opts.iosdelay);
+      opts.iosdelay = -1;
+    }
   }
   if (whichOS.winphone && (opts.winphonedelay == undefined || opts.winphonedelay == "null")) {
     opts.winphonedelay = globalOptions.winphonedelay;
