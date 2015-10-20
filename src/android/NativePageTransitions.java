@@ -55,7 +55,7 @@ public class NativePageTransitions extends CordovaPlugin {
     try {
       Class.forName("org.crosswalk.engine.XWalkWebViewEngine");
       isCrosswalk = true;
-    } catch (Exception e) {
+    } catch (Exception ignore) {
     }
   }
 
@@ -251,11 +251,11 @@ public class NativePageTransitions extends CordovaPlugin {
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
               webView.loadUrlIntoView(HREF_PREFIX + href, false);
-            } else {
+            } else if (delay > -1) {
               // it's a #hash, which is handled in JS
               doDrawerTransition();
             }
-          } else {
+          } else if (delay > -1) {
             doDrawerTransition();
           }
         }
@@ -275,11 +275,11 @@ public class NativePageTransitions extends CordovaPlugin {
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
               webView.loadUrlIntoView(HREF_PREFIX + href, false);
-            } else {
+            } else if (delay > -1) {
               // it's a #hash, which is handled in JS
               doFadeTransition();
             }
-          } else {
+          } else if (delay > -1) {
             doFadeTransition();
           }
         }
@@ -676,7 +676,7 @@ public class NativePageTransitions extends CordovaPlugin {
       try {
         TextureView textureView = findCrosswalkTextureView((ViewGroup) getView());
         bitmap = textureView.getBitmap();
-      } catch(Exception e) {
+      } catch(Exception ignore) {
       }
     } else {
       View view = getView();
