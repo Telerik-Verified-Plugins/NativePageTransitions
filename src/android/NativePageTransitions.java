@@ -117,15 +117,23 @@ public class NativePageTransitions extends CordovaPlugin {
 
   @Override
   public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
-    _action = action;
     _callbackContext = callbackContext;
 
     if ("executePendingTransition".equalsIgnoreCase(action)) {
-      // TODO other transitions
       delay = 0;
-      doSlideTransition();
+      if ("slide".equalsIgnoreCase(_action)) {
+        doSlideTransition();
+      } else if ("fade".equalsIgnoreCase(_action)) {
+        doFadeTransition();
+      } else if ("flip".equalsIgnoreCase(_action)) {
+        doFlipTransition();
+      } else if ("drawer".equalsIgnoreCase(_action)) {
+        doDrawerTransition();
+      }
       return true;
     }
+
+    _action = action;
 
     final JSONObject json = args.getJSONObject(0);
     final String href = json.isNull("href") ? null : json.getString("href");
@@ -290,11 +298,11 @@ public class NativePageTransitions extends CordovaPlugin {
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
               webView.loadUrlIntoView(HREF_PREFIX + href, false);
-            } else {
+            } else if (delay > -1) {
               // it's a #hash, which is handled in JS
               doFlipTransition();
             }
-          } else {
+          } else if (delay > -1) {
             doFlipTransition();
           }
         }
@@ -708,7 +716,7 @@ public class NativePageTransitions extends CordovaPlugin {
           WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
           WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
       imageView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-      if (BEFORE_KITKAT && !isCrosswalk) {
+      if (BEFORE_KITKAT) {
         getView().setLayerType(View.LAYER_TYPE_SOFTWARE, null);
       }
     }
