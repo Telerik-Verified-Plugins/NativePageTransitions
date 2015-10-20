@@ -56,7 +56,7 @@ public class NativePageTransitions extends CordovaPlugin {
     try {
       Class.forName("org.crosswalk.engine.XWalkWebViewEngine");
       isCrosswalk = true;
-    } catch (Exception e) {
+    } catch (Exception ignore) {
     }
   }
 
@@ -657,7 +657,7 @@ public class NativePageTransitions extends CordovaPlugin {
       try {
         TextureView textureView = findCrosswalkTextureView((ViewGroup) getView());
         bitmap = textureView.getBitmap();
-      } catch(Exception e) {
+      } catch(Exception ignore) {
       }
     } else {
       View view = getView();
