@@ -118,12 +118,8 @@
     CGImageRelease(tempImage);
   }
   
-  if ([direction isEqualToString:@"left"] || [direction isEqualToString:@"up"]) {
-    [self.transitionView.superview insertSubview:_screenShotImageView belowSubview:self.transitionView];
-  } else {
-    [self.transitionView.superview insertSubview:_screenShotImageView aboveSubview:self.transitionView];
-  }
-  
+  [self.transitionView.superview insertSubview:_screenShotImageView aboveSubview:self.transitionView];
+
   // Make a cropped version of the screenshot with only the top and/or bottom piece. Only for left/right slides atm.
   if ([direction isEqualToString:@"left"] || [direction isEqualToString:@"right"]) {
     if (fixedPixelsTop > 0) {
@@ -153,7 +149,6 @@
     if (delay < 0) {
       CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
       [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-      return;
     } else {
       [self performSlideTransition];
     }
@@ -166,7 +161,7 @@
   NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
   // duration/delay is passed in ms, but needs to be in sec here
   duration = duration / 1000;
-  CGFloat lowerLayerAlpha = 0.4f; // TODO consider passing in
+  CGFloat lowerLayerAlpha = 0.4f;
   NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue]; // pass in -1 for manual (requires you to call executePendingTransition)
   if (delay < 0) {
     delay = 0;
@@ -215,6 +210,10 @@
                         delay:delay
                       options:UIViewAnimationOptionCurveEaseInOut
                    animations:^{
+                      if ([direction isEqualToString:@"left"] || [direction isEqualToString:@"up"]) {
+                        // the screenshot was on top of the webview to hide any page changes, but now we need the webview on top again
+                        [self.transitionView.superview bringSubviewToFront:self.transitionView];
+                      }
                      [_screenShotImageView setFrame:CGRectMake(transitionToX/screenshotSlowdownFactor, transitionToY, width, height)];
                    }
                    completion:^(BOOL finished) {
@@ -291,7 +290,6 @@
     if (delay < 0) {
       CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
       [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-      return;
     } else {
       [self performFlipTransition];
     }
