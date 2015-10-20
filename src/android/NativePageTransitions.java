@@ -113,11 +113,9 @@ public class NativePageTransitions extends CordovaPlugin {
 
   @Override
   public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
-    _action = action;
     _callbackContext = callbackContext;
 
     if ("executePendingTransition".equalsIgnoreCase(action)) {
-      // TODO other transitions
       delay = 0;
       if (pendingTransitionType != null) {
         pendingTransitionType.doTransition(this);
@@ -127,6 +125,8 @@ public class NativePageTransitions extends CordovaPlugin {
         return false;
       }
     }
+
+    _action = action;
 
     final JSONObject json = args.getJSONObject(0);
     final String href = json.isNull("href") ? null : json.getString("href");
@@ -697,7 +697,7 @@ public class NativePageTransitions extends CordovaPlugin {
           WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
           WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
       imageView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-      if (BEFORE_KITKAT && !isCrosswalk) {
+      if (BEFORE_KITKAT) {
         getView().setLayerType(View.LAYER_TYPE_SOFTWARE, null);
       }
     }
