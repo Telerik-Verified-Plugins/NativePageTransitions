@@ -7,6 +7,7 @@
 @property (retain) NSMutableDictionary *flipOptions;
 @property (retain) NSMutableDictionary *drawerOptions;
 @property (retain) NSMutableDictionary *fadeOptions;
+@property (retain) NSMutableDictionary *curlOptions;
 
 @property (strong, nonatomic) IBOutlet UIImageView *screenShotImageViewTop;
 @property (strong, nonatomic) IBOutlet UIImageView *screenShotImageViewBottom;

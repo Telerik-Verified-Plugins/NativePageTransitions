@@ -47,6 +47,8 @@
     [self performDrawerTransition];
   } else if (_fadeOptions != nil) {
     [self performFadeTransition];
+  } else if (_curlOptions != nil) {
+    [self performCurlTransition];
   }
 }
 
@@ -578,10 +580,7 @@
 - (void) curl:(CDVInvokedUrlCommand*)command {
   _command = command;
   NSMutableDictionary *args = [command.arguments objectAtIndex:0];
-  NSString *direction = [args objectForKey:@"direction"];
   NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
-  NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
-  NSString *href = [args objectForKey:@"href"];
 
   // duration is passed in ms, but needs to be in sec here
   duration = duration / 1000;
@@ -604,6 +603,33 @@
   [_screenShotImageView setImage:image];
   [self.transitionView.superview insertSubview:_screenShotImageView aboveSubview:self.transitionView];
 
+  if ([self loadHrefIfPassed:[args objectForKey:@"href"]]) {
+    // pass in -1 for manual (requires you to call executePendingTransition)
+    NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
+    _curlOptions = args;
+    if (delay < 0) {
+      CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+      [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    } else {
+      [self performCurlTransition];
+    }
+  }
+}
+
+- (void) performCurlTransition {
+  NSMutableDictionary *args = _curlOptions;
+  _curlOptions = nil;
+  NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
+  NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
+  NSString *direction = [args objectForKey:@"direction"];
+
+  if (delay < 0) {
+    delay = 0;
+  }
+  // delay/duration is passed in ms, but needs to be in sec here
+  duration = duration / 1000;
+  delay = delay / 1000;
+
   UIViewAnimationOptions animationOptions;
   if ([direction isEqualToString:@"up"]) {
     animationOptions = UIViewAnimationOptionTransitionCurlUp;
@@ -611,26 +637,24 @@
     animationOptions = UIViewAnimationOptionTransitionCurlDown;
   } else {
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"direction should be one of up|down"];
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
     return;
   }
 
-  if ([self loadHrefIfPassed:href]) {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
-      // remove the screenshot halfway during the transition
-      dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (duration/2) * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
-        [_screenShotImageView removeFromSuperview];
-      });
-      [UIView transitionWithView:self.viewController.view
-                        duration:duration
-                         options:animationOptions | UIViewAnimationOptionAllowAnimatedContent
-                      animations:^{}
-                      completion:^(BOOL finished) {
-                        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-                        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-                      }];
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
+    // remove the screenshot halfway during the transition
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (duration/2) * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
+      [_screenShotImageView removeFromSuperview];
     });
-  }
+    [UIView transitionWithView:self.viewController.view
+                      duration:duration
+                       options:animationOptions | UIViewAnimationOptionAllowAnimatedContent
+                    animations:^{}
+                    completion:^(BOOL finished) {
+                      CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+                      [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
+                    }];
+  });
 }
 
 - (BOOL) loadHrefIfPassed:(NSString*) href {
