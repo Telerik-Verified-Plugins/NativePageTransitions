@@ -43,6 +43,10 @@
     [self performSlideTransition];
   } else if (_flipOptions != nil) {
     [self performFlipTransition];
+  } else if (_drawerOptions != nil) {
+    [self performDrawerTransition];
+  } else if (_fadeOptions != nil) {
+    [self performFadeTransition];
   }
 }
 
@@ -205,56 +209,55 @@
     webviewFromY = (-height/webviewSlowdownFactor)+_nonWebViewHeight;
   }
   
+  [UIView animateWithDuration:duration
+                        delay:delay
+                      options:UIViewAnimationOptionCurveEaseInOut
+                   animations:^{
+                     [_screenShotImageView setFrame:CGRectMake(transitionToX/screenshotSlowdownFactor, transitionToY, width, height)];
+                   }
+                   completion:^(BOOL finished) {
+                     [_screenShotImageView removeFromSuperview];
+                     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+                     [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
+                   }];
 
+  // also, fade out the screenshot a bit to give it some depth
+  if ([slowdownfactor intValue] != 1 && ([direction isEqualToString:@"left"] || [direction isEqualToString:@"up"])) {
     [UIView animateWithDuration:duration
                           delay:delay
                         options:UIViewAnimationOptionCurveEaseInOut
                      animations:^{
-                       [_screenShotImageView setFrame:CGRectMake(transitionToX/screenshotSlowdownFactor, transitionToY, width, height)];
+                       _screenShotImageView.alpha = lowerLayerAlpha;
                      }
                      completion:^(BOOL finished) {
-                       [_screenShotImageView removeFromSuperview];
-                       CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-                       [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
                      }];
-    
-    // also, fade out the screenshot a bit to give it some depth
-    if ([slowdownfactor intValue] != 1 && ([direction isEqualToString:@"left"] || [direction isEqualToString:@"up"])) {
-      [UIView animateWithDuration:duration
-                            delay:delay
-                          options:UIViewAnimationOptionCurveEaseInOut
-                       animations:^{
-                         _screenShotImageView.alpha = lowerLayerAlpha;
-                       }
-                       completion:^(BOOL finished) {
-                       }];
-    }
-    
-    [self.transitionView setFrame:CGRectMake(-transitionToX/webviewSlowdownFactor, webviewFromY, width, height-_nonWebViewHeight)];
-    
+  }
+
+  [self.transitionView setFrame:CGRectMake(-transitionToX/webviewSlowdownFactor, webviewFromY, width, height-_nonWebViewHeight)];
+
+  [UIView animateWithDuration:duration
+                        delay:delay
+                      options:UIViewAnimationOptionCurveEaseInOut
+                   animations:^{
+                     [self.transitionView setFrame:CGRectMake(0, webviewToY, width, height-_nonWebViewHeight)];
+                   }
+                   completion:^(BOOL finished) {
+                     // doesn't matter if these weren't added
+                     [_screenShotImageViewTop removeFromSuperview];
+                     [_screenShotImageViewBottom removeFromSuperview];
+                   }];
+
+  if ([slowdownfactor intValue] != 1 && ([direction isEqualToString:@"right"] || [direction isEqualToString:@"down"])) {
+    self.transitionView.alpha = lowerLayerAlpha;
     [UIView animateWithDuration:duration
                           delay:delay
                         options:UIViewAnimationOptionCurveEaseInOut
                      animations:^{
-                       [self.transitionView setFrame:CGRectMake(0, webviewToY, width, height-_nonWebViewHeight)];
+                       self.transitionView.alpha = 1.0;
                      }
                      completion:^(BOOL finished) {
-                       // doesn't matter if these weren't added
-                       [_screenShotImageViewTop removeFromSuperview];
-                       [_screenShotImageViewBottom removeFromSuperview];
                      }];
-    
-    if ([slowdownfactor intValue] != 1 && ([direction isEqualToString:@"right"] || [direction isEqualToString:@"down"])) {
-      self.transitionView.alpha = lowerLayerAlpha;
-      [UIView animateWithDuration:duration
-                            delay:delay
-                          options:UIViewAnimationOptionCurveEaseInOut
-                       animations:^{
-                         self.transitionView.alpha = 1.0;
-                       }
-                       completion:^(BOOL finished) {
-                       }];
-    }
+  }
 }
 
 - (void) flip:(CDVInvokedUrlCommand*)command {
@@ -339,34 +342,30 @@
     return;
   }
 
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
-      // remove the screenshot halfway during the transition
-      dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (duration/2) * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
-        [_screenShotImageView removeFromSuperview];
-      });
-      [UIView transitionWithView:self.viewController.view
-                        duration:duration
-                         options:animationOptions | UIViewAnimationOptionAllowAnimatedContent
-                      animations:^{}
-                      completion:^(BOOL finished) {
-                        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-                        [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
-                      }];
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
+    // remove the screenshot halfway during the transition
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (duration/2) * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
+      [_screenShotImageView removeFromSuperview];
     });
+    [UIView transitionWithView:self.viewController.view
+                      duration:duration
+                       options:animationOptions | UIViewAnimationOptionAllowAnimatedContent
+                    animations:^{}
+                    completion:^(BOOL finished) {
+                      CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+                      [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
+                    }];
+  });
 }
 
 - (void) drawer:(CDVInvokedUrlCommand*)command {
   _command = command;
   NSMutableDictionary *args = [command.arguments objectAtIndex:0];
   NSString *action = [args objectForKey:@"action"];
-  NSString *origin = [args objectForKey:@"origin"];
   NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
-  NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
-  NSString *href = [args objectForKey:@"href"];
   
-  // duration/delay is passed in ms, but needs to be in sec here
+  // duration is passed in ms, but needs to be in sec here
   duration = duration / 1000;
-  delay = delay / 1000;
   
   CGFloat width = self.viewController.view.frame.size.width;
   CGFloat height = self.viewController.view.frame.size.height;
@@ -379,26 +378,6 @@
     CGFloat temp = width;
     width = height;
     height = temp;
-  }
-  
-  CGFloat transitionToX = 0;
-  CGFloat webviewTransitionFromX = 0;
-  int screenshotPx = 44;
-  
-  if ([action isEqualToString:@"open"]) {
-    if ([origin isEqualToString:@"right"]) {
-      transitionToX = -width+screenshotPx;
-    } else {
-      transitionToX = width-screenshotPx;
-    }
-  } else if ([action isEqualToString:@"close"]) {
-    if ([origin isEqualToString:@"right"]) {
-      transitionToX = screenshotPx;
-      webviewTransitionFromX = -width+screenshotPx;
-    } else {
-      transitionToX = -width+screenshotPx;
-      webviewTransitionFromX = width-screenshotPx;
-    }
   }
   
   CGSize viewSize = self.viewController.view.bounds.size;
@@ -432,46 +411,168 @@
     self.transitionView.layer.shadowOpacity = 0.5f;
     self.transitionView.layer.shadowPath = shadowPath.CGPath;
   }
-  
-  if ([self loadHrefIfPassed:href]) {
-    if ([action isEqualToString:@"open"]) {
-      [UIView animateWithDuration:duration
-                            delay:delay
-                          options:UIViewAnimationOptionCurveEaseInOut // TODO: allow passing in?
-                       animations:^{
-                         [_screenShotImageView setFrame:CGRectMake(transitionToX, 0, width, height)];
-                       }
-                       completion:^(BOOL finished) {
-                         if ([action isEqualToString:@"close"]) {
-                           _screenShotImageView = nil;
-                           // [_screenShotImageView removeFromSuperview];
-                         }
-                         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-                         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-                       }];
-    }
-    
-    if ([action isEqualToString:@"close"]) {
-      [self.transitionView setFrame:CGRectMake(webviewTransitionFromX, _nonWebViewHeight, width, height-_nonWebViewHeight)];
-      
-      // position the webview above the screenshot just after the animation kicks in so no flash of the webview occurs
-      dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay+50 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
-        [self.transitionView.superview bringSubviewToFront:self.transitionView];
-      });
-      
-      [UIView animateWithDuration:duration
-                            delay:delay
-                          options:UIViewAnimationOptionCurveEaseInOut
-                       animations:^{
-                         [self.transitionView setFrame:CGRectMake(0, _nonWebViewHeight, width, height-_nonWebViewHeight)];
-                       }
-                       completion:^(BOOL finished) {
-                         [_screenShotImageView removeFromSuperview];
-                         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-                         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-                       }];
+
+  if ([self loadHrefIfPassed:[args objectForKey:@"href"]]) {
+    // pass in -1 for manual (requires you to call executePendingTransition)
+    NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
+    _drawerOptions = args;
+    if (delay < 0) {
+      CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+      [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    } else {
+      [self performDrawerTransition];
     }
   }
+}
+
+- (void) performDrawerTransition {
+  NSMutableDictionary *args = _drawerOptions;
+  _drawerOptions = nil;
+  NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
+  NSString *action = [args objectForKey:@"action"];
+  NSString *origin = [args objectForKey:@"origin"];
+  NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
+  if (delay < 0) {
+    delay = 0;
+  }
+  // duration is passed in ms, but needs to be in sec here
+  duration = duration / 1000;
+  delay = delay / 1000;
+
+  CGFloat width = self.viewController.view.frame.size.width;
+  CGFloat height = self.viewController.view.frame.size.height;
+  
+  // correct landscape detection on iOS < 8
+  BOOL isLandscape = UIInterfaceOrientationIsLandscape([UIApplication sharedApplication].statusBarOrientation);
+  if (isLandscape && width < height) {
+    CGFloat temp = width;
+    width = height;
+    height = temp;
+  }
+
+  CGFloat transitionToX = 0;
+  CGFloat webviewTransitionFromX = 0;
+  int screenshotPx = 44;
+  
+  if ([action isEqualToString:@"open"]) {
+    if ([origin isEqualToString:@"right"]) {
+      transitionToX = -width+screenshotPx;
+    } else {
+      transitionToX = width-screenshotPx;
+    }
+  } else if ([action isEqualToString:@"close"]) {
+    if ([origin isEqualToString:@"right"]) {
+      transitionToX = screenshotPx;
+      webviewTransitionFromX = -width+screenshotPx;
+    } else {
+      transitionToX = -width+screenshotPx;
+      webviewTransitionFromX = width-screenshotPx;
+    }
+  }
+  
+  if ([action isEqualToString:@"open"]) {
+    [UIView animateWithDuration:duration
+                          delay:delay
+                        options:UIViewAnimationOptionCurveEaseInOut
+                     animations:^{
+                       [_screenShotImageView setFrame:CGRectMake(transitionToX, 0, width, height)];
+                     }
+                     completion:^(BOOL finished) {
+                       if ([action isEqualToString:@"close"]) {
+                         _screenShotImageView = nil;
+                         // [_screenShotImageView removeFromSuperview];
+                       }
+                       CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+                       [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
+                     }];
+  }
+
+  if ([action isEqualToString:@"close"]) {
+    [self.transitionView setFrame:CGRectMake(webviewTransitionFromX, _nonWebViewHeight, width, height-_nonWebViewHeight)];
+
+    // position the webview above the screenshot just after the animation kicks in so no flash of the webview occurs
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay+50 * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
+      [self.transitionView.superview bringSubviewToFront:self.transitionView];
+    });
+
+    [UIView animateWithDuration:duration
+                          delay:delay
+                        options:UIViewAnimationOptionCurveEaseInOut
+                     animations:^{
+                       [self.transitionView setFrame:CGRectMake(0, _nonWebViewHeight, width, height-_nonWebViewHeight)];
+                     }
+                     completion:^(BOOL finished) {
+                       [_screenShotImageView removeFromSuperview];
+                       CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+                       [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
+                     }];
+  }
+}
+
+- (void) fade:(CDVInvokedUrlCommand*)command {
+  _command = command;
+  NSMutableDictionary *args = [command.arguments objectAtIndex:0];
+
+  // overlay the webview with a screenshot to prevent the user from seeing changes in the webview before the fade kicks in
+  CGSize viewSize = self.viewController.view.bounds.size;
+
+  UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0);
+  [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
+
+  // Read the UIImage object
+  UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+  UIGraphicsEndImageContext();
+
+  CGFloat width = self.viewController.view.frame.size.width;
+  CGFloat height = self.viewController.view.frame.size.height;
+  [_screenShotImageView setFrame:CGRectMake(0, 0, width, height)];
+
+  _screenShotImageView = [[UIImageView alloc]initWithFrame:[self.viewController.view.window frame]];
+  [_screenShotImageView setImage:image];
+  [self.transitionView.superview insertSubview:_screenShotImageView aboveSubview:self.transitionView];
+    
+  if ([self loadHrefIfPassed:[args objectForKey:@"href"]]) {
+    // pass in -1 for manual (requires you to call executePendingTransition)
+    NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
+    _fadeOptions = args;
+    if (delay < 0) {
+      CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+      [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    } else {
+      [self performFadeTransition];
+    }
+  }
+}
+
+- (void) performFadeTransition {
+  NSMutableDictionary *args = _fadeOptions;
+  _fadeOptions = nil;
+  NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
+    NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
+
+  if (delay < 0) {
+    delay = 0;
+  }
+  // delay/duration is passed in ms, but needs to be in sec here
+  duration = duration / 1000;
+  delay = delay / 1000;
+
+  UIViewAnimationOptions animationOptions = UIViewAnimationOptionTransitionCrossDissolve;
+
+  dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
+      // remove the screenshot halfway during the transition
+      dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (duration/2) * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
+          [_screenShotImageView removeFromSuperview];
+      });
+      [UIView transitionWithView:self.viewController.view
+                        duration:duration
+                         options:animationOptions | UIViewAnimationOptionAllowAnimatedContent
+                      animations:^{}
+                      completion:^(BOOL finished) {
+                          CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+                          [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
+                      }];
+  });
 }
 
 - (void) curl:(CDVInvokedUrlCommand*)command {
@@ -481,28 +582,28 @@
   NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
   NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
   NSString *href = [args objectForKey:@"href"];
-  
+
   // duration is passed in ms, but needs to be in sec here
   duration = duration / 1000;
-  
+
   // overlay the webview with a screenshot to prevent the user from seeing changes in the webview before the flip kicks in
   CGSize viewSize = self.viewController.view.bounds.size;
-  
+
   UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0);
   [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
-  
+
   // Read the UIImage object
   UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
   UIGraphicsEndImageContext();
-  
+
   CGFloat width = self.viewController.view.frame.size.width;
   CGFloat height = self.viewController.view.frame.size.height;
   [_screenShotImageView setFrame:CGRectMake(0, 0, width, height)];
-  
+
   _screenShotImageView = [[UIImageView alloc]initWithFrame:[self.viewController.view.window frame]];
   [_screenShotImageView setImage:image];
   [self.transitionView.superview insertSubview:_screenShotImageView aboveSubview:self.transitionView];
-  
+
   UIViewAnimationOptions animationOptions;
   if ([direction isEqualToString:@"up"]) {
     animationOptions = UIViewAnimationOptionTransitionCurlUp;
@@ -513,7 +614,7 @@
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     return;
   }
-  
+
   if ([self loadHrefIfPassed:href]) {
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
       // remove the screenshot halfway during the transition
@@ -530,55 +631,6 @@
                       }];
     });
   }
-}
-
-- (void) fade:(CDVInvokedUrlCommand*)command {
-    _command = command;
-    NSMutableDictionary *args = [command.arguments objectAtIndex:0];
-    NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
-    NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
-    NSString *href = [args objectForKey:@"href"];
-    
-    // duration is passed in ms, but needs to be in sec here
-    duration = duration / 1000;
-    
-    // overlay the webview with a screenshot to prevent the user from seeing changes in the webview before the fade kicks in
-    CGSize viewSize = self.viewController.view.bounds.size;
-    
-    UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0);
-    [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
-    
-    // Read the UIImage object
-    UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    
-    CGFloat width = self.viewController.view.frame.size.width;
-    CGFloat height = self.viewController.view.frame.size.height;
-    [_screenShotImageView setFrame:CGRectMake(0, 0, width, height)];
-    
-    _screenShotImageView = [[UIImageView alloc]initWithFrame:[self.viewController.view.window frame]];
-    [_screenShotImageView setImage:image];
-    [self.transitionView.superview insertSubview:_screenShotImageView aboveSubview:self.transitionView];
-    
-    UIViewAnimationOptions animationOptions;
-    animationOptions = UIViewAnimationOptionTransitionCrossDissolve;
-    
-    if ([self loadHrefIfPassed:href]) {
-        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, delay * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
-            // remove the screenshot halfway during the transition
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (duration/2) * NSEC_PER_MSEC), dispatch_get_main_queue(), ^{
-                [_screenShotImageView removeFromSuperview];
-            });
-            [UIView transitionWithView:self.viewController.view
-                              duration:duration
-                               options:animationOptions | UIViewAnimationOptionAllowAnimatedContent
-                            animations:^{}
-                            completion:^(BOOL finished) {
-                                CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-                                [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-                            }];
-        });
-    }
 }
 
 - (BOOL) loadHrefIfPassed:(NSString*) href {
