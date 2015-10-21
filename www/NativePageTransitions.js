@@ -4,16 +4,14 @@ function NativePageTransitions() {
 NativePageTransitions.prototype.globalOptions =  {
   duration: 400,
   iosdelay: 60, // a number of milliseconds, or -1 (call executePendingTransition() when ready)
-  androiddelay: 70, // a number of milliseconds, or -1 (call executePendingTransition() when ready)
+  androiddelay: 70, // a number of milliseconds, a function that takes an animate callback that will execute pending transition when invoked, or -1 to manually call executePendingTransition() when ready
   winphonedelay: 200,
   slowdownfactor: 4,
   fixedPixelsTop: 0,    // currently for slide left/right only
   fixedPixelsBottom: 0  // currently for slide left/right only
 };
 
-NativePageTransitions.prototype.executePendingTransition = function (onSuccess, onError) {
-  cordova.exec(onSuccess, onError, "NativePageTransitions", "executePendingTransition", []);
-};
+NativePageTransitions.prototype.executePendingTransition = executePendingTransition;
 
 NativePageTransitions.prototype.slide = function (options, onSuccess, onError) {
   var opts = options || {};
@@ -24,15 +22,7 @@ NativePageTransitions.prototype.slide = function (options, onSuccess, onError) {
   if (opts.duration == undefined || opts.duration == "null") {
     opts.duration = this.globalOptions.duration;
   }
-  if (opts.androiddelay == undefined || opts.androiddelay == "null") {
-    opts.androiddelay = this.globalOptions.androiddelay;
-  }
-  if (opts.iosdelay == undefined || opts.iosdelay == "null") {
-    opts.iosdelay = this.globalOptions.iosdelay;
-  }
-  if (opts.winphonedelay == undefined || opts.winphonedelay == "null") {
-    opts.winphonedelay = this.globalOptions.winphonedelay;
-  }
+  var delayCallbacks = setupDelayOptions(opts);
   if (opts.fixedPixelsTop == undefined || opts.fixedPixelsTop == "null") {
     opts.fixedPixelsTop = this.globalOptions.fixedPixelsTop;
   }
@@ -42,6 +32,7 @@ NativePageTransitions.prototype.slide = function (options, onSuccess, onError) {
   // setting slowdownfactor > 1 makes the next page slide less pixels. Use 1 for side-by-side.
   opts.slowdownfactor = opts.slowdownfactor || this.globalOptions.slowdownfactor;
   cordova.exec(onSuccess, onError, "NativePageTransitions", "slide", [opts]);
+  fireDelayCallbacks(delayCallbacks);
 };
 
 NativePageTransitions.prototype.drawer = function (options, onSuccess, onError) {
@@ -54,16 +45,9 @@ NativePageTransitions.prototype.drawer = function (options, onSuccess, onError) 
   if (opts.duration == undefined || opts.duration == "null") {
     opts.duration = this.globalOptions.duration;
   }
-  if (opts.androiddelay == undefined || opts.androiddelay == "null") {
-    opts.androiddelay = this.globalOptions.androiddelay;
-  }
-  if (opts.iosdelay == undefined || opts.iosdelay == "null") {
-    opts.iosdelay = this.globalOptions.iosdelay;
-  }
-  if (opts.winphonedelay == undefined || opts.winphonedelay == "null") {
-    opts.winphonedelay = this.globalOptions.winphonedelay;
-  }
+  var delayCallbacks = setupDelayOptions(opts);
   cordova.exec(onSuccess, onError, "NativePageTransitions", "drawer", [opts]);
+  fireDelayCallbacks(delayCallbacks);
 };
 
 NativePageTransitions.prototype.flip = function (options, onSuccess, onError) {
@@ -75,16 +59,9 @@ NativePageTransitions.prototype.flip = function (options, onSuccess, onError) {
   if (opts.duration == undefined || opts.duration == "null") {
     opts.duration = this.globalOptions.duration;
   }
-  if (opts.androiddelay == undefined || opts.androiddelay == "null") {
-    opts.androiddelay = this.globalOptions.androiddelay;
-  }
-  if (opts.iosdelay == undefined || opts.iosdelay == "null") {
-    opts.iosdelay = this.globalOptions.iosdelay;
-  }
-  if (opts.winphonedelay == undefined || opts.winphonedelay == "null") {
-    opts.winphonedelay = this.globalOptions.winphonedelay;
-  }
+  var delayCallbacks = setupDelayOptions(opts);
   cordova.exec(onSuccess, onError, "NativePageTransitions", "flip", [opts]);
+  fireDelayCallbacks(delayCallbacks);
 };
 
 NativePageTransitions.prototype.curl = function (options, onSuccess, onError) {
@@ -96,10 +73,9 @@ NativePageTransitions.prototype.curl = function (options, onSuccess, onError) {
   if (opts.duration == undefined || opts.duration == "null") {
     opts.duration = this.globalOptions.duration;
   }
-  if (opts.iosdelay == undefined || opts.iosdelay == "null") {
-    opts.iosdelay = this.globalOptions.iosdelay;
-  }
+  var delayCallbacks = setupDelayOptions(opts, {android: false, winphone: false});
   cordova.exec(onSuccess, onError, "NativePageTransitions", "curl", [opts]);
+  fireDelayCallbacks(delayCallbacks);
 };
 
 NativePageTransitions.prototype.fade = function (options, onSuccess, onError) {
@@ -110,13 +86,9 @@ NativePageTransitions.prototype.fade = function (options, onSuccess, onError) {
   if (opts.duration == undefined || opts.duration == "null") {
     opts.duration = this.globalOptions.duration;
   }
-  if (opts.androiddelay == undefined || opts.androiddelay == "null") {
-    opts.androiddelay = this.globalOptions.androiddelay;
-  }
-  if (opts.iosdelay == undefined || opts.iosdelay == "null") {
-    opts.iosdelay = this.globalOptions.iosdelay;
-  }
+  var delayCallbacks = setupDelayOptions(opts, {winphone: false});
   cordova.exec(onSuccess, onError, "NativePageTransitions", "fade", [opts]);
+  fireDelayCallbacks(delayCallbacks);
 };
 
 NativePageTransitions.prototype._validateHref = function (href, errCallback) {
@@ -171,6 +143,56 @@ NativePageTransitions.install = function () {
 
   window.plugins.nativepagetransitions = new NativePageTransitions();
   return window.plugins.nativepagetransitions;
+};
+
+function setupDelayOptions(opts, whichOS) {
+  whichOS = whichOS || {};
+  whichOS = {
+    android: whichOS.android !== false,
+    ios: whichOS.ios !== false,
+    winphone: whichOS.winphone !== false
+  };
+  var callbacks = [];
+  var globalOptions = NativePageTransitions.prototype.globalOptions;
+  if (whichOS.android) {
+    if (opts.androiddelay == undefined || opts.androiddelay == "null") {
+      opts.androiddelay = globalOptions.androiddelay;
+    } else if (typeof opts.androiddelay == 'function') {
+      callbacks.push(opts.androiddelay);
+      opts.androiddelay = -1;
+    }
+  }
+  if (whichOS.ios) {
+    if (opts.iosdelay == undefined || opts.iosdelay == "null") {
+      opts.iosdelay = globalOptions.iosdelay;
+    } else if (typeof opts.iosdelay == 'function') {
+      callbacks.push(opts.iosdelay);
+      opts.iosdelay = -1;
+    }
+  }
+  if (whichOS.winphone && (opts.winphonedelay == undefined || opts.winphonedelay == "null")) {
+    opts.winphonedelay = globalOptions.winphonedelay;
+  }
+  return callbacks;
+}
+
+function animate(onSuccess, onError) {
+  onSuccess = onSuccess || function() {};
+  onError = onError || function() {};
+  executePendingTransition(onSuccess, onError);
+}
+
+function fireDelayCallbacks(callbacks) {
+  if (callbacks) {
+    for (var i = 0; i < callbacks.length; i++) {
+      var callback = callbacks[i];
+      callback(animate);
+    }
+  }
+}
+
+function executePendingTransition(onSuccess, onError) {
+  cordova.exec(onSuccess, onError, "NativePageTransitions", "executePendingTransition", []);
 };
 
 cordova.addConstructor(NativePageTransitions.install);
