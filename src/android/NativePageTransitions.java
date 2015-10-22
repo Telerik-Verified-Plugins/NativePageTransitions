@@ -61,6 +61,9 @@ public class NativePageTransitions extends CordovaPlugin {
 
   public Object onMessage(String id, Object data) {
     if ("onPageFinished".equalsIgnoreCase(id)) {
+      if (delay == -1) {
+        delay = 0;
+      }
       if ("slide".equalsIgnoreCase(_action)) {
         doSlideTransition();
       } else if ("fade".equalsIgnoreCase(_action)) {
