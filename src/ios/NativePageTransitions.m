@@ -212,7 +212,7 @@
                    animations:^{
                       if ([direction isEqualToString:@"left"] || [direction isEqualToString:@"up"]) {
                         // the screenshot was on top of the webview to hide any page changes, but now we need the webview on top again
-                        [self.transitionView.superview bringSubviewToFront:self.transitionView];
+                        [self.transitionView.superview sendSubviewToBack:_screenShotImageView];
                       }
                      [_screenShotImageView setFrame:CGRectMake(transitionToX/screenshotSlowdownFactor, transitionToY, width, height)];
                    }
