@@ -10,4 +10,16 @@ by [Telerik](http://www.telerik.com)
 </table>
 
 
+Using the Cordova CLI?
+
+```
+cordova plugin add com.telerik.plugins.nativepagetransitions
+```
+
+Using PGB?
+
+```xml
+<gap:plugin name="com.telerik.plugins.nativepagetransitions" source="npm" />
+```
+
 [The MIT License (MIT)](http://www.opensource.org/licenses/mit-license.html)
