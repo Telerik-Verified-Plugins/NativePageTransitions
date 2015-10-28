@@ -719,7 +719,7 @@ public class NativePageTransitions extends CordovaPlugin {
           WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
           WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
       imageView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-      if (BEFORE_KITKAT) {
+      if (BEFORE_KITKAT && !isCrosswalk) {
         getView().setLayerType(View.LAYER_TYPE_SOFTWARE, null);
       }
     }
