@@ -642,7 +642,7 @@ public class NativePageTransitions extends CordovaPlugin {
             });
 
             if ("open".equals(drawerAction)) {
-              animation.setFillAfter(true); // persists the screenshot
+              animation.setFillAfter(true); // persists the screenshot (not working on crosswalk btw..)
               imageView.startAnimation(animation);
             } else {
               // prevent a flash by moving the webview to the front with a little delay
