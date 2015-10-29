@@ -370,6 +370,9 @@
                        options:animationOptions | UIViewAnimationOptionAllowAnimatedContent
                     animations:^{}
                     completion:^(BOOL finished) {
+                      if (backgroundColor != nil) {
+                        self.transitionView.superview.superview.backgroundColor = [UIColor blackColor];
+                      }
                       CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
                       [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
                     }];
