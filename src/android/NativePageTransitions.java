@@ -37,6 +37,7 @@ public class NativePageTransitions extends CordovaPlugin {
   private String drawerAction;
   private String drawerOrigin;
   private String direction;
+  private String backgroundColor;
   private int slowdownfactor;
   private int fixedPixelsTop;
   private int fixedPixelsBottom;
@@ -294,11 +295,11 @@ public class NativePageTransitions extends CordovaPlugin {
       duration = json.getLong("duration");
       direction = json.getString("direction");
       delay = json.getLong("androiddelay");
+      backgroundColor = json.optString("backgroundColor");
 
       cordova.getActivity().runOnUiThread(new Runnable() {
         @Override
         public void run() {
-          final String backgroundColor = json.optString("backgroundColor");
           if (backgroundColor != null && backgroundColor.startsWith("#")) {
             ((View) webView.getView().getParent()).setBackgroundColor(Color.parseColor(backgroundColor));
           }
@@ -434,6 +435,10 @@ public class NativePageTransitions extends CordovaPlugin {
               public void onAnimationEnd(Animation animation) {
                 animation.reset();
                 getView().clearAnimation();
+                if (backgroundColor != null && backgroundColor.startsWith("#")) {
+                  backgroundColor = null;
+                  ((View) webView.getView().getParent()).setBackgroundColor(Color.BLACK);
+                }
                 _callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
               }
 
@@ -489,11 +494,6 @@ public class NativePageTransitions extends CordovaPlugin {
               transitionToY = getView().getHeight();
               translateAnimationY = TranslateAnimation.ABSOLUTE;
               webviewSlowdownFactor = slowdownfactor;
-            }
-
-            if (slowdownfactor != 1) {
-              // looks best with a black background due to the opacity involved
-              ((View) webView.getView().getParent()).setBackgroundColor(Color.BLACK);
             }
 
             if (fixedImageViewTop != null) {
