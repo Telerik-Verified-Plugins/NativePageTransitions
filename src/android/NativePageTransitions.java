@@ -465,7 +465,6 @@ public class NativePageTransitions extends CordovaPlugin {
         cordova.getActivity().runOnUiThread(new Runnable() {
           @Override
           public void run() {
-
             float transitionToX = 0;
             float transitionToY = 0;
             int translateAnimationY = TranslateAnimation.RELATIVE_TO_PARENT;
@@ -490,6 +489,11 @@ public class NativePageTransitions extends CordovaPlugin {
               transitionToY = getView().getHeight();
               translateAnimationY = TranslateAnimation.ABSOLUTE;
               webviewSlowdownFactor = slowdownfactor;
+            }
+
+            if (slowdownfactor != 1) {
+              // looks best with a black background due to the opacity involved
+              ((View) webView.getView().getParent()).setBackgroundColor(Color.BLACK);
             }
 
             if (fixedImageViewTop != null) {
