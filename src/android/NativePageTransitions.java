@@ -1,6 +1,7 @@
 package com.telerik.plugins.nativepagetransitions;
 
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.os.Build;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
@@ -297,6 +298,10 @@ public class NativePageTransitions extends CordovaPlugin {
       cordova.getActivity().runOnUiThread(new Runnable() {
         @Override
         public void run() {
+          final String backgroundColor = json.optString("backgroundColor");
+          if (backgroundColor != null && backgroundColor.startsWith("#")) {
+            ((View) webView.getView().getParent()).setBackgroundColor(Color.parseColor(backgroundColor));
+          }
           imageView.setImageBitmap(getBitmap());
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
