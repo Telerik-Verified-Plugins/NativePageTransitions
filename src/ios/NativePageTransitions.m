@@ -290,10 +290,20 @@
     if (delay < 0) {
       CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
       [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+      return;
     } else {
       [self performFlipTransition];
     }
   }
+}
+
+// Assumes input like "#00FF00" (#RRGGBB)
+- (UIColor *)colorFromHexString:(NSString *)hexString {
+    unsigned rgbValue = 0;
+    NSScanner *scanner = [NSScanner scannerWithString:hexString];
+    [scanner setScanLocation:1]; // bypass '#' character
+    [scanner scanHexInt:&rgbValue];
+    return [UIColor colorWithRed:((rgbValue & 0xFF0000) >> 16)/255.0 green:((rgbValue & 0xFF00) >> 8)/255.0 blue:(rgbValue & 0xFF)/255.0 alpha:1.0];
 }
 
 - (void) performFlipTransition {
@@ -301,10 +311,18 @@
   _flipOptions = nil;
   NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
   NSString *direction = [args objectForKey:@"direction"];
+  NSString *backgroundColor = [args objectForKey:@"backgroundColor"];
   NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
   if (delay < 0) {
     delay = 0;
   }
+  
+  // change the background color of the view if the user likes that (no need to change it back btw)
+  if (backgroundColor != nil) {
+    UIColor *theColor = [self colorFromHexString:backgroundColor];
+    self.transitionView.superview.superview.backgroundColor = theColor;
+  }
+  
   // duration is passed in ms, but needs to be in sec here
   duration = duration / 1000;
 
