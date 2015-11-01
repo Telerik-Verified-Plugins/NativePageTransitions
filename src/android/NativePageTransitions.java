@@ -61,24 +61,6 @@ public class NativePageTransitions extends CordovaPlugin {
     }
   }
 
-  public Object onMessage(String id, Object data) {
-    if ("onPageFinished".equalsIgnoreCase(id)) {
-      if (delay == -1) {
-        delay = 0;
-      }
-      if ("slide".equalsIgnoreCase(_action)) {
-        doSlideTransition();
-      } else if ("fade".equalsIgnoreCase(_action)) {
-        doFadeTransition();
-      } else if ("flip".equalsIgnoreCase(_action)) {
-        doFlipTransition();
-      } else if ("drawer".equalsIgnoreCase(_action)) {
-        doDrawerTransition();
-      }
-    }
-    return super.onMessage(id, data);
-  }
-
   // Helper to be compile-time compatible with both Cordova 3.x and 4.x.
   private View cachedView;
   private View getView() {
@@ -201,12 +183,13 @@ public class NativePageTransitions extends CordovaPlugin {
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
               webView.loadUrlIntoView(HREF_PREFIX + href, false);
-            } else if (delay > -1) {
-              // it's a #hash, which is handled in JS
-              doSlideTransition();
             }
-          } else if (delay > -1) {
+          }
+
+          if (delay > -1) {
             doSlideTransition();
+          } else {
+            _callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
           }
         }
       });
@@ -256,12 +239,13 @@ public class NativePageTransitions extends CordovaPlugin {
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
               webView.loadUrlIntoView(HREF_PREFIX + href, false);
-            } else if (delay > -1) {
-              // it's a #hash, which is handled in JS
-              doDrawerTransition();
             }
-          } else if (delay > -1) {
+          }
+
+          if (delay > -1) {
             doDrawerTransition();
+          } else {
+            _callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
           }
         }
       });
@@ -280,12 +264,13 @@ public class NativePageTransitions extends CordovaPlugin {
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
               webView.loadUrlIntoView(HREF_PREFIX + href, false);
-            } else if (delay > -1) {
-              // it's a #hash, which is handled in JS
-              doFadeTransition();
             }
-          } else if (delay > -1) {
+          }
+
+          if (delay > -1) {
             doFadeTransition();
+          } else {
+            _callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
           }
         }
       });
@@ -307,12 +292,13 @@ public class NativePageTransitions extends CordovaPlugin {
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
               webView.loadUrlIntoView(HREF_PREFIX + href, false);
-            } else if (delay > -1) {
-              // it's a #hash, which is handled in JS
-              doFlipTransition();
             }
-          } else if (delay > -1) {
+          }
+
+          if (delay > -1) {
             doFlipTransition();
+          } else {
+            _callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
           }
         }
       });

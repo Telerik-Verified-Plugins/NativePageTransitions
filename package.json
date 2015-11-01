@@ -4,6 +4,7 @@
   "cordova_name": "Native Page Transitions",
   "description": "Slide out the current page to reveal the next one. By a native transitions.",
   "license": "MIT",
+  "author": "Telerik / Eddy Verbruggen <eddyverbruggen@gmail.com> (https://github.com/EddyVerbruggen)",
   "repo": "https://github.com/Telerik-Verified-Plugins/WKWebView.git",
   "issue": "https://github.com/Telerik-Verified-Plugins/WKWebView/issues",
   "keywords": [
