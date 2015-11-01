@@ -44,6 +44,7 @@ public class NativePageTransitions extends CordovaPlugin {
   private CallbackContext _callbackContext;
   private String _action;
   // this plugin listens to page changes, so only kick in a transition when it was actually requested by the JS bridge
+  // TODO remove this bool as we no longer rely on it due to xwalk and delay=-1 complexities
   private boolean calledFromJS;
   private FrameLayout layout;
   private static final boolean BEFORE_KITKAT = Build.VERSION.SDK_INT < 19;
