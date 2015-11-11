@@ -695,13 +695,10 @@
         filePath = [self.wkWebView.URL.absoluteString stringByReplacingOccurrencesOfString:self.wkWebView.URL.path withString:replaceWith];
         url = [NSURL URLWithString:filePath];
       } else {
-        NSString *filePath = [self.commandDelegate pathForResource:bareFileName];
-        if (filePath == nil) {
-          CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"file not found"];
-          [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
-          return NO;
-        }
-        url = [NSURL fileURLWithPath: filePath];
+        NSString *currentUrl = self.webView.request.URL.absoluteString;
+        NSRange lastSlash = [currentUrl rangeOfString:@"/" options:NSBackwardsSearch];
+        NSString *path = [currentUrl substringToIndex:lastSlash.location+1];
+        url = [NSURL URLWithString:[path stringByAppendingString:bareFileName]];
       }
 
       // re-attach the params when loading the url
