@@ -21,7 +21,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -49,7 +48,6 @@ public class NativePageTransitions extends CordovaPlugin {
   private FrameLayout layout;
   private static final boolean BEFORE_KITKAT = Build.VERSION.SDK_INT < 19;
   private final boolean requiresRedraw = BEFORE_KITKAT;
-  private static final String HREF_PREFIX = "file:///android_asset/www/";
   // this plugin listens to page changes, so only kick in a transition when it was actually requested by the JS bridge
   private String lastCallbackID;
   private static boolean isCrosswalk;
@@ -126,25 +124,6 @@ public class NativePageTransitions extends CordovaPlugin {
     final JSONObject json = args.getJSONObject(0);
     final String href = json.isNull("href") ? null : json.getString("href");
 
-    // check whether or not the file exists
-    if (href != null && !"null".equals(href)) {
-      if (!href.startsWith("#") && href.contains(".html")) {
-        String localFile = href;
-        if (!href.endsWith(".html")) {
-          localFile = href.substring(0, href.indexOf(".html") + 5);
-        }
-        try {
-          webView.getContext().getAssets().open("www/" + localFile);
-        } catch (IOException ignore) {
-          callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "href .html file not found: " + href));
-          return false;
-        }
-      } else if (!href.startsWith("#")) {
-        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "href must be null, a .html file or a #navigationhash: " + href));
-        return false;
-      }
-    }
-
     calledFromJS = true;
 
     // TODO move effects to separate classes, and reuse lots of code
@@ -183,7 +162,7 @@ public class NativePageTransitions extends CordovaPlugin {
 
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
-              webView.loadUrlIntoView(HREF_PREFIX + href, false);
+              webView.loadUrlIntoView(webView.getUrl().substring(0, webView.getUrl().lastIndexOf('/')+1) + href, false);
             }
           }
 
@@ -239,7 +218,7 @@ public class NativePageTransitions extends CordovaPlugin {
 
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
-              webView.loadUrlIntoView(HREF_PREFIX + href, false);
+              webView.loadUrlIntoView(webView.getUrl().substring(0, webView.getUrl().lastIndexOf('/')+1) + href, false);
             }
           }
 
@@ -264,7 +243,7 @@ public class NativePageTransitions extends CordovaPlugin {
 
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
-              webView.loadUrlIntoView(HREF_PREFIX + href, false);
+              webView.loadUrlIntoView(webView.getUrl().substring(0, webView.getUrl().lastIndexOf('/')+1) + href, false);
             }
           }
 
@@ -290,9 +269,10 @@ public class NativePageTransitions extends CordovaPlugin {
             ((View)getView().getParent()).setBackgroundColor(Color.parseColor(backgroundColor));
           }
           imageView.setImageBitmap(getBitmap());
+          bringToFront(imageView);
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
-              webView.loadUrlIntoView(HREF_PREFIX + href, false);
+              webView.loadUrlIntoView(webView.getUrl().substring(0, webView.getUrl().lastIndexOf('/')+1) + href, false);
             }
           }
 
