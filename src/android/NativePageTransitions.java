@@ -287,7 +287,7 @@ public class NativePageTransitions extends CordovaPlugin {
         @Override
         public void run() {
           if (backgroundColor != null && backgroundColor.startsWith("#")) {
-            ((View) webView.getView().getParent()).setBackgroundColor(Color.parseColor(backgroundColor));
+            ((View)getView().getParent()).setBackgroundColor(Color.parseColor(backgroundColor));
           }
           imageView.setImageBitmap(getBitmap());
           if (href != null && !"null".equals(href)) {
@@ -424,7 +424,7 @@ public class NativePageTransitions extends CordovaPlugin {
                 getView().clearAnimation();
                 if (backgroundColor != null && backgroundColor.startsWith("#")) {
                   backgroundColor = null;
-                  ((View) webView.getView().getParent()).setBackgroundColor(Color.BLACK);
+                  ((View)getView().getParent()).setBackgroundColor(Color.BLACK);
                 }
                 _callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
               }
