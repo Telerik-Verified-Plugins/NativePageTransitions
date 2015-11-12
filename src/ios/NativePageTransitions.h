@@ -9,6 +9,8 @@
 @property (retain) NSMutableDictionary *fadeOptions;
 @property (retain) NSMutableDictionary *curlOptions;
 
+@property (retain) UIColor *originalColor;
+
 @property (strong, nonatomic) IBOutlet UIImageView *screenShotImageViewTop;
 @property (strong, nonatomic) IBOutlet UIImageView *screenShotImageViewBottom;
 @property (strong, nonatomic) IBOutlet UIImageView *screenShotImageView;

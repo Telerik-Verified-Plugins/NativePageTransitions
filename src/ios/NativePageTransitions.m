@@ -69,7 +69,8 @@
   NSNumber *fixedPixelsBottomNum = [args objectForKey:@"fixedPixelsBottom"];
   int fixedPixelsTop = [fixedPixelsTopNum intValue];
   int fixedPixelsBottom = [fixedPixelsBottomNum intValue];
-  
+
+  _originalColor = self.viewController.view.backgroundColor;
   self.viewController.view.backgroundColor = [UIColor blackColor];
   self.transitionView.layer.shadowOpacity = 0;
   
@@ -218,6 +219,10 @@
                    }
                    completion:^(BOOL finished) {
                      [_screenShotImageView removeFromSuperview];
+                     if (_originalColor != nil) {
+                       self.viewController.view.backgroundColor = _originalColor;
+                     }
+
                      CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
                      [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
                    }];
