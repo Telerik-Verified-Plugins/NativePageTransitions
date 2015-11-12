@@ -143,21 +143,19 @@ public class NativePageTransitions extends CordovaPlugin {
           bringToFront(imageView);
 
           // crop the screenshot if fixed pixels have been passed when sliding left or right
-          if ("left".equals(direction) || "right".equals(direction)) {
-            if (fixedPixelsTop > 0) {
-              int cropHeight = (int)(fixedPixelsTop * retinaFactor);
-              fixedImageViewTop = new ImageView(cordova.getActivity().getBaseContext());
-              fixedImageViewTop.setImageBitmap(Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), cropHeight));
-              final FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP);
-              layout.addView(fixedImageViewTop, lp);
-            }
-            if (fixedPixelsBottom > 0) {
-              int cropHeight = (int)(fixedPixelsBottom * retinaFactor);
-              fixedImageViewBottom = new ImageView(cordova.getActivity().getBaseContext());
-              fixedImageViewBottom.setImageBitmap(Bitmap.createBitmap(bitmap, 0, bitmap.getHeight()-cropHeight, bitmap.getWidth(), cropHeight));
-              final FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM);
-              layout.addView(fixedImageViewBottom, lp);
-            }
+          if (fixedPixelsTop > 0) {
+            int cropHeight = (int)(fixedPixelsTop * retinaFactor);
+            fixedImageViewTop = new ImageView(cordova.getActivity().getBaseContext());
+            fixedImageViewTop.setImageBitmap(Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), cropHeight));
+            final FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP);
+            layout.addView(fixedImageViewTop, lp);
+          }
+          if (fixedPixelsBottom > 0) {
+            int cropHeight = (int)(fixedPixelsBottom * retinaFactor);
+            fixedImageViewBottom = new ImageView(cordova.getActivity().getBaseContext());
+            fixedImageViewBottom.setImageBitmap(Bitmap.createBitmap(bitmap, 0, bitmap.getHeight()-cropHeight, bitmap.getWidth(), cropHeight));
+            final FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM);
+            layout.addView(fixedImageViewBottom, lp);
           }
 
           if (href != null && !"null".equals(href)) {
