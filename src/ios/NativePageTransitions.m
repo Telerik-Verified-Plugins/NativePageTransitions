@@ -121,28 +121,26 @@
   
   [self.transitionView.superview insertSubview:_screenShotImageView aboveSubview:self.transitionView];
 
-  // Make a cropped version of the screenshot with only the top and/or bottom piece. Only for left/right slides atm.
-  if ([direction isEqualToString:@"left"] || [direction isEqualToString:@"right"]) {
-    if (fixedPixelsTop > 0) {
-      CGRect rect = CGRectMake(0.0, _nonWebViewHeight*retinaFactor, image.size.width*retinaFactor, fixedPixelsTop*retinaFactor);
-      CGRect rect2 = CGRectMake(0.0, _nonWebViewHeight, image.size.width, fixedPixelsTop);
-      CGImageRef tempImage = CGImageCreateWithImageInRect([image CGImage], rect);
-      _screenShotImageViewTop = [[UIImageView alloc]initWithFrame:rect2];
-      [_screenShotImageViewTop setImage:[UIImage imageWithCGImage:tempImage]];
-      CGImageRelease(tempImage);
-      [self.transitionView.superview insertSubview:_screenShotImageViewTop aboveSubview:([direction isEqualToString:@"left"] ? self.transitionView : self.screenShotImageView)];
-    }
-    if (fixedPixelsBottom > 0) {
-      CGRect rect = CGRectMake(0.0, (image.size.height-fixedPixelsBottom)*retinaFactor, image.size.width*retinaFactor, fixedPixelsBottom*retinaFactor);
-      CGRect rect2 = CGRectMake(0.0, image.size.height-fixedPixelsBottom, image.size.width, fixedPixelsBottom);
-      CGImageRef tempImage = CGImageCreateWithImageInRect([image CGImage], rect);
-      _screenShotImageViewBottom = [[UIImageView alloc]initWithFrame:rect2];
-      [_screenShotImageViewBottom setImage:[UIImage imageWithCGImage:tempImage]];
-      CGImageRelease(tempImage);
-      [self.transitionView.superview insertSubview:_screenShotImageViewBottom aboveSubview:([direction isEqualToString:@"left"] ? self.transitionView : self.screenShotImageView)];
-    }
+  // Make a cropped version of the screenshot with only the top and/or bottom piece
+  if (fixedPixelsTop > 0) {
+    CGRect rect = CGRectMake(0.0, _nonWebViewHeight*retinaFactor, image.size.width*retinaFactor, fixedPixelsTop*retinaFactor);
+    CGRect rect2 = CGRectMake(0.0, _nonWebViewHeight, image.size.width, fixedPixelsTop);
+    CGImageRef tempImage = CGImageCreateWithImageInRect([image CGImage], rect);
+    _screenShotImageViewTop = [[UIImageView alloc]initWithFrame:rect2];
+    [_screenShotImageViewTop setImage:[UIImage imageWithCGImage:tempImage]];
+    CGImageRelease(tempImage);
+    [self.transitionView.superview insertSubview:_screenShotImageViewTop aboveSubview:([direction isEqualToString:@"left"] ? self.transitionView : self.screenShotImageView)];
   }
-  
+  if (fixedPixelsBottom > 0) {
+    CGRect rect = CGRectMake(0.0, (image.size.height-fixedPixelsBottom)*retinaFactor, image.size.width*retinaFactor, fixedPixelsBottom*retinaFactor);
+    CGRect rect2 = CGRectMake(0.0, image.size.height-fixedPixelsBottom, image.size.width, fixedPixelsBottom);
+    CGImageRef tempImage = CGImageCreateWithImageInRect([image CGImage], rect);
+    _screenShotImageViewBottom = [[UIImageView alloc]initWithFrame:rect2];
+    [_screenShotImageViewBottom setImage:[UIImage imageWithCGImage:tempImage]];
+    CGImageRelease(tempImage);
+    [self.transitionView.superview insertSubview:_screenShotImageViewBottom aboveSubview:([direction isEqualToString:@"left"] ? self.transitionView : self.screenShotImageView)];
+  }
+
   if ([self loadHrefIfPassed:href]) {
     // pass in -1 for manual (requires you to call executePendingTransition)
     NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
