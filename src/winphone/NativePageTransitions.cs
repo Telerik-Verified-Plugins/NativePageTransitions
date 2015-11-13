@@ -148,7 +148,7 @@ namespace Cordova.Extension.Commands
                     }
                     else
                     {
-                        to = "www/" + to;
+                      	to = path.Substring(0, path.LastIndexOf('/')+1) + to;
                     }
                     browser.Navigate(new Uri(to, UriKind.RelativeOrAbsolute));
                 }
@@ -238,12 +238,10 @@ namespace Cordova.Extension.Commands
                              path = path.Substring(0, path.IndexOf("#"));
                          }
                          to = path + to;
-                        //Debug.WriteLine("browser will navigate to (a): " + to);
                     }
                     else
                     {
-                        to = "www/" + to;
-                        //Debug.WriteLine("browser will navigate to (b): " + to);
+                      	to = path.Substring(0, path.LastIndexOf('/')+1) + to;
                     }
                     browser.Navigate(new Uri(to, UriKind.RelativeOrAbsolute));
                 }
