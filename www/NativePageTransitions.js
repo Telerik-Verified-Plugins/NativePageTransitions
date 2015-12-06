@@ -126,21 +126,26 @@ NativePageTransitions.prototype._validateHref = function (href, errCallback) {
   if (hrf.indexOf('www/') == -1) {
     console.log('Probably running inside a companion app, your app may crash if your html file is not in the root!');
     // hrf is something like file:///data/.../index.html
-    currentHref = hrf.substr(hrf.lastIndexOf('/')+1);
+    //we need the path after the hash for the remote views (for example /index.html#a/b/page1.html)
+    currentHref = hrf.substr(hrf.lastIndexOf('/index.html') + 1);
   } else {
     currentHref = hrf.substr(hrf.indexOf('www/')+4);
   }
   // if no href was passed the transition should always kick in
   if (href) {
     // if only hash nav, do it in JS for Android
-    // (I'm a little reluctant to depend on 'device' only for this: device.platform == "Android")
-    if (href.indexOf('#') == 0 && navigator.userAgent.indexOf("Android") > -1) {
+    // (navigator.userAgent gives incorrect data sometimes, so it's more robust to check for device.platform)
+    if (href.indexOf('#') == 0 && device.platform == "Android") {
       // starts with a #, so check if the current one has a hash with the same value
       if (currentHref.indexOf('#') > -1) {
         var file = currentHref.substr(0, currentHref.indexOf('#'));
         if (hrf.indexOf('www/') == -1) {
-          var to = hrf.substr(0, hrf.lastIndexOf('/')+1);
-          window.location.href = to+file+href;
+            //we need the path after the hash for the remote views (for example /index.html#a/b/page1.html)
+            var to = hrf.substr(0, hrf.lastIndexOf('/index.html') + 1);
+            //empiric workaround for lots of android devices
+            setTimeout(function () {
+                window.location.href = to + file + href;
+            }, 150);
         } else {
           window.location.href = "/android_asset/www/"+file+ href;
         }
