@@ -23,6 +23,8 @@
 		<engine name="cordova" version=">=3.0.0"/>
 	</engines>
 
+  <dependency id="cordova-plugin-device"/>
+
 	<js-module src="www/NativePageTransitions.js" name="NativePageTransitions">
 		<clobbers target="window.plugins.nativepagetransitions"/>
 	</js-module>
