@@ -96,6 +96,35 @@
           window.kendo.effects.enabled = false;
         }
 
+        // hijack programmatic navigation
+        if (!window.originalAppNavigate) {
+          window.originalAppNavigate = window.app.navigate;
+          window.app.navigate = function(href, transition) {
+            if (transition === undefined) {
+              transition = defaultTransition;
+            }
+            if (transition === undefined) {
+              transition = "slide";
+            }
+            if (transition.indexOf("flip") > -1) {
+              var direction = "right"; // define a default
+              if (transition.indexOf("flip:") > -1) {
+                direction = transition.substring(5);
+              }
+              window.NativePageTransitionsKendoAdapter.flip(direction, href);
+            } else if (transition.indexOf("slide") > -1) {
+              var direction = "left"; // define a default
+              if (transition.indexOf("slide:") > -1) {
+                direction = transition.substring(6);
+              }
+              window.NativePageTransitionsKendoAdapter.slide(direction, href);
+            } else {
+              // unsupported by the adapter, invoke the original function
+              window.originalAppNavigate(href, transition);
+            }
+          }
+        }
+
         // enhance <a> tags
         var transAnchors;
         if (defaultTransition == "none") {
