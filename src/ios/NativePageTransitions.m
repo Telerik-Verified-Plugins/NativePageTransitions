@@ -39,6 +39,7 @@
 }
 
 - (void) executePendingTransition:(CDVInvokedUrlCommand*)command {
+  _command = command;
   if (_slideOptions != nil) {
     [self performSlideTransition];
   } else if (_flipOptions != nil) {
