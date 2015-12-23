@@ -6,31 +6,6 @@
 #define IS_RETINA_HD_DISPLAY() [[UIScreen mainScreen] respondsToSelector:@selector(scale)] && [[UIScreen mainScreen] scale] == 3.0f
 #define DISPLAY_SCALE IS_RETINA_HD_DISPLAY() ? 3.0f : (IS_RETINA_DISPLAY() ? 2.0f : 1.0f)
 
-/*
-- (CDVPlugin*) initWithWebView:(UIWebView*)theWebView {
-  self = [super initWithWebView:theWebView];
-  CGRect screenBound = [[UIScreen mainScreen] bounds];
-
-  // Set our transitioning view
-  self.transitionView = self.webView;
-
-  // Look to see if a WKWebView exists
-  Class wkWebViewClass = NSClassFromString(@"WKWebView");
-  if (wkWebViewClass) {
-    for (int i = 0; i < self.webView.superview.subviews.count; i++) {
-      UIView *subview = [self.webView.superview.subviews objectAtIndex:i];
-      if ([subview isKindOfClass:wkWebViewClass]) {
-        self.transitionView = self.wkWebView = (WKWebView *)subview;
-      }
-    }
-  }
-
-  // webview height may differ from screen height because of a statusbar
-  _nonWebViewHeight = screenBound.size.width-self.transitionView.frame.size.width + screenBound.size.height-self.transitionView.frame.size.height;
-  return self;
-}
-*/
-
 - (void) pluginInitialize {
     CGRect screenBound = [[UIScreen mainScreen] bounds];
 
