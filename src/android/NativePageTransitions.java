@@ -503,7 +503,7 @@ public class NativePageTransitions extends CordovaPlugin {
               webViewAnimation.addAnimation(webViewAnimation2);
             }
 
-            imageViewAnimation.setAnimationListener(new Animation.AnimationListener() {
+            webViewAnimation.setAnimationListener(new Animation.AnimationListener() {
               @Override
               public void onAnimationStart(Animation animation) {
               }
