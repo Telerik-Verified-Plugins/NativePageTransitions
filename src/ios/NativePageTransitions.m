@@ -10,7 +10,7 @@
     CGRect screenBound = [[UIScreen mainScreen] bounds];
 
     // Set our transitioning view
-    self.transitionView = self.webView;
+    self.transitionView = self.viewController.view;
 
     // Look to see if a WKWebView exists
     Class wkWebViewClass = NSClassFromString(@"WKWebView");
