@@ -93,6 +93,10 @@ namespace Cordova.Extension.Commands
                 int webviewSlowdownFactor = 1;
                 int imgOrdering = 0;
 
+                if (transitionOptions.slowdownfactor < 0) {
+                  transitionOptions.slowdownfactor = 1000;
+                }
+
                 if (transitionOptions.direction == "left")
                 {
                     screenshotSlowdownFactor = transitionOptions.slowdownfactor;
