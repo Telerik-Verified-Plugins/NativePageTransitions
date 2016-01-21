@@ -471,13 +471,15 @@ public class NativePageTransitions extends CordovaPlugin {
             // imageview animation
             final AnimationSet imageViewAnimation = new AnimationSet(true);
 
-            final Animation imageViewAnimation1 = new TranslateAnimation(
-                TranslateAnimation.RELATIVE_TO_PARENT, 0f,
-                TranslateAnimation.RELATIVE_TO_PARENT, transitionToX / screenshotSlowdownFactor,
-                translateAnimationY, 0,
-                translateAnimationY, transitionToY / screenshotSlowdownFactor);
-            imageViewAnimation1.setDuration(duration);
-            imageViewAnimation.addAnimation(imageViewAnimation1);
+            if (screenshotSlowdownFactor > 0) {
+              final Animation imageViewAnimation1 = new TranslateAnimation(
+                  TranslateAnimation.RELATIVE_TO_PARENT, 0f,
+                  TranslateAnimation.RELATIVE_TO_PARENT, transitionToX / screenshotSlowdownFactor,
+                  translateAnimationY, 0,
+                  translateAnimationY, transitionToY / screenshotSlowdownFactor);
+              imageViewAnimation1.setDuration(duration);
+              imageViewAnimation.addAnimation(imageViewAnimation1);
+            }
 
             if (slowdownfactor != 1 && ("left".equals(direction) || "up".equals(direction))) {
               final Animation imageViewAnimation2 = new AlphaAnimation(1, 0.4f);
@@ -488,14 +490,16 @@ public class NativePageTransitions extends CordovaPlugin {
             // webview animation
             final AnimationSet webViewAnimation = new AnimationSet(true);
 
-            final Animation webViewAnimation1 = new TranslateAnimation(
-                TranslateAnimation.RELATIVE_TO_PARENT, -transitionToX / webviewSlowdownFactor,
-                TranslateAnimation.RELATIVE_TO_PARENT, 0,
-                TranslateAnimation.ABSOLUTE, -transitionToY / webviewSlowdownFactor,
-                TranslateAnimation.ABSOLUTE, 0);
-            webViewAnimation1.setDuration(duration);
-            webViewAnimation.addAnimation(webViewAnimation1);
-//            webViewAnimation1.setInterpolator(new OvershootInterpolator());
+            if (webviewSlowdownFactor > 0) {
+              final Animation webViewAnimation1 = new TranslateAnimation(
+                  TranslateAnimation.RELATIVE_TO_PARENT, -transitionToX / webviewSlowdownFactor,
+                  TranslateAnimation.RELATIVE_TO_PARENT, 0,
+                  TranslateAnimation.ABSOLUTE, -transitionToY / webviewSlowdownFactor,
+                  TranslateAnimation.ABSOLUTE, 0);
+              webViewAnimation1.setDuration(duration);
+              webViewAnimation.addAnimation(webViewAnimation1);
+              //webViewAnimation1.setInterpolator(new OvershootInterpolator());
+            }
 
             if (slowdownfactor != 1 && ("right".equals(direction) || "down".equals(direction))) {
               final Animation webViewAnimation2 = new AlphaAnimation(0.4f, 1f);
