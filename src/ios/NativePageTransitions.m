@@ -204,25 +204,36 @@
     webviewFromY = (-height/webviewSlowdownFactor)+_nonWebViewHeight;
   }
 
-  [UIView animateWithDuration:duration
-                        delay:delay
-                      options:UIViewAnimationOptionCurveEaseInOut
-                   animations:^{
-                      if ([direction isEqualToString:@"left"] || [direction isEqualToString:@"up"]) {
-                        // the screenshot was on top of the webview to hide any page changes, but now we need the webview on top again
-                        [self.transitionView.superview sendSubviewToBack:_screenShotImageView];
-                      }
-                     [_screenShotImageView setFrame:CGRectMake(transitionToX/screenshotSlowdownFactor, transitionToY, width, height)];
-                   }
-                   completion:^(BOOL finished) {
-                     [_screenShotImageView removeFromSuperview];
-                     if (_originalColor != nil) {
-                       self.viewController.view.backgroundColor = _originalColor;
-                     }
-
-                     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-                     [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
-                   }];
+    if (screenshotSlowdownFactor > 0) {
+      [UIView animateWithDuration:duration
+                            delay:delay
+                          options:UIViewAnimationOptionCurveEaseInOut
+                       animations:^{
+                          if ([direction isEqualToString:@"left"] || [direction isEqualToString:@"up"]) {
+                            // the screenshot was on top of the webview to hide any page changes, but now we need the webview on top again
+                            [self.transitionView.superview sendSubviewToBack:_screenShotImageView];
+                          }
+                         [_screenShotImageView setFrame:CGRectMake(transitionToX/screenshotSlowdownFactor, transitionToY, width, height)];
+                       }
+                       completion:^(BOOL finished) {
+                         [_screenShotImageView removeFromSuperview];
+                         if (_originalColor != nil) {
+                           self.viewController.view.backgroundColor = _originalColor;
+                         }
+                         CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+                         [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
+                       }];
+    } else {
+      [self.transitionView.superview sendSubviewToBack:_screenShotImageView];
+      dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (delay+duration) * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+          [_screenShotImageView removeFromSuperview];
+          if (_originalColor != nil) {
+              self.viewController.view.backgroundColor = _originalColor;
+          }
+          CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+          [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
+      });
+    }
 
   // also, fade out the screenshot a bit to give it some depth
   if ([slowdownfactor intValue] != 1 && ([direction isEqualToString:@"left"] || [direction isEqualToString:@"up"])) {
@@ -236,19 +247,27 @@
                      }];
   }
 
-  [self.transitionView setFrame:CGRectMake(-transitionToX/webviewSlowdownFactor, webviewFromY, width, height-_nonWebViewHeight)];
+    if (webviewSlowdownFactor > 0) {
+      [self.transitionView setFrame:CGRectMake(-transitionToX/webviewSlowdownFactor, webviewFromY, width, height-_nonWebViewHeight)];
 
-  [UIView animateWithDuration:duration
-                        delay:delay
-                      options:UIViewAnimationOptionCurveEaseInOut
-                   animations:^{
-                     [self.transitionView setFrame:CGRectMake(0, webviewToY, width, height-_nonWebViewHeight)];
-                   }
-                   completion:^(BOOL finished) {
-                     // doesn't matter if these weren't added
-                     [_screenShotImageViewTop removeFromSuperview];
-                     [_screenShotImageViewBottom removeFromSuperview];
-                   }];
+      [UIView animateWithDuration:duration
+                            delay:delay
+                          options:UIViewAnimationOptionCurveEaseInOut
+                       animations:^{
+                         [self.transitionView setFrame:CGRectMake(0, webviewToY, width, height-_nonWebViewHeight)];
+                       }
+                       completion:^(BOOL finished) {
+                         // doesn't matter if these weren't added
+                         [_screenShotImageViewTop removeFromSuperview];
+                         [_screenShotImageViewBottom removeFromSuperview];
+                       }];
+    } else {
+      dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (delay+duration) * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+          // doesn't matter if these weren't added
+          [_screenShotImageViewTop removeFromSuperview];
+          [_screenShotImageViewBottom removeFromSuperview];
+      });
+    }
 
   if ([slowdownfactor intValue] != 1 && ([direction isEqualToString:@"right"] || [direction isEqualToString:@"down"])) {
     self.transitionView.alpha = lowerLayerAlpha;
