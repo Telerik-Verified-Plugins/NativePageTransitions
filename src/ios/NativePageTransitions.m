@@ -109,9 +109,9 @@
   CGFloat retinaFactor = DISPLAY_SCALE;
 
   // in case of a statusbar above the webview, crop off the top
-  if (_nonWebViewHeight > 0 && [direction isEqualToString:@"down"]) {
-    CGRect rect = CGRectMake(0.0, _nonWebViewHeight*retinaFactor, image.size.width*retinaFactor, (image.size.height-_nonWebViewHeight)*retinaFactor);
-    CGRect rect2 = CGRectMake(0.0, _nonWebViewHeight, image.size.width, image.size.height-_nonWebViewHeight);
+  if ((_nonWebViewHeight > 0 || fixedPixelsTop > 0) && [direction isEqualToString:@"down"]) {
+    CGRect rect = CGRectMake(0.0, (_nonWebViewHeight+fixedPixelsTop)*retinaFactor, image.size.width*retinaFactor, (image.size.height-_nonWebViewHeight-fixedPixelsTop)*retinaFactor);
+    CGRect rect2 = CGRectMake(0.0, _nonWebViewHeight+fixedPixelsTop, image.size.width, image.size.height-_nonWebViewHeight-fixedPixelsTop);
     CGImageRef tempImage = CGImageCreateWithImageInRect([image CGImage], rect);
     _screenShotImageView = [[UIImageView alloc]initWithFrame:rect2];
     [_screenShotImageView setImage:[UIImage imageWithCGImage:tempImage]];
@@ -128,7 +128,7 @@
     _screenShotImageViewTop = [[UIImageView alloc]initWithFrame:rect2];
     [_screenShotImageViewTop setImage:[UIImage imageWithCGImage:tempImage]];
     CGImageRelease(tempImage);
-    [self.transitionView.superview insertSubview:_screenShotImageViewTop aboveSubview:([direction isEqualToString:@"left"] ? self.transitionView : self.screenShotImageView)];
+    [self.transitionView.superview insertSubview:_screenShotImageViewTop aboveSubview:([direction isEqualToString:@"left"] || [direction isEqualToString:@"up"] ? self.transitionView : self.screenShotImageView)];
   }
   if (fixedPixelsBottom > 0) {
     CGRect rect = CGRectMake(0.0, (image.size.height-fixedPixelsBottom)*retinaFactor, image.size.width*retinaFactor, fixedPixelsBottom*retinaFactor);
@@ -137,7 +137,7 @@
     _screenShotImageViewBottom = [[UIImageView alloc]initWithFrame:rect2];
     [_screenShotImageViewBottom setImage:[UIImage imageWithCGImage:tempImage]];
     CGImageRelease(tempImage);
-    [self.transitionView.superview insertSubview:_screenShotImageViewBottom aboveSubview:([direction isEqualToString:@"left"] ? self.transitionView : self.screenShotImageView)];
+    [self.transitionView.superview insertSubview:_screenShotImageViewBottom aboveSubview:([direction isEqualToString:@"left"] || [direction isEqualToString:@"up"] ? self.transitionView : self.screenShotImageView)];
   }
 
   if ([self loadHrefIfPassed:href]) {
@@ -168,6 +168,9 @@
 
   NSString *direction = [args objectForKey:@"direction"];
   NSNumber *slowdownfactor = [args objectForKey:@"slowdownfactor"];
+
+  NSNumber *fixedPixelsTopNum = [args objectForKey:@"fixedPixelsTop"];
+  int fixedPixelsTop = [fixedPixelsTopNum intValue];
 
   CGFloat transitionToX = 0;
   CGFloat transitionToY = 0;
@@ -248,15 +251,27 @@
   }
 
     if (webviewSlowdownFactor > 0) {
-      [self.transitionView setFrame:CGRectMake(-transitionToX/webviewSlowdownFactor, webviewFromY, width, height-_nonWebViewHeight)];
+        if (fixedPixelsTop > 0) {
+            [self.transitionView setBounds:CGRectMake(0, fixedPixelsTop, width, height-_nonWebViewHeight+fixedPixelsTop)];
+            [self.transitionView setClipsToBounds:YES];
+        }
+        int corr = 0;
+        if ([direction isEqualToString:@"left"] || [direction isEqualToString:@"right"]) {
+            corr = fixedPixelsTop;
+        }
+        [self.transitionView setFrame:CGRectMake(-transitionToX/webviewSlowdownFactor, webviewFromY+corr, width, height-_nonWebViewHeight)];
 
       [UIView animateWithDuration:duration
                             delay:delay
                           options:UIViewAnimationOptionCurveEaseInOut
                        animations:^{
-                         [self.transitionView setFrame:CGRectMake(0, webviewToY, width, height-_nonWebViewHeight)];
-                       }
-                       completion:^(BOOL finished) {
+                             [self.transitionView setFrame:CGRectMake(0, webviewToY+fixedPixelsTop, width, height-_nonWebViewHeight)];
+                         }
+                         completion:^(BOOL finished) {
+                             if (fixedPixelsTop > 0) {
+                               [self.transitionView setFrame:CGRectMake(0, webviewToY, width, height-_nonWebViewHeight)];
+                               [self.transitionView setBounds:CGRectMake(0, 0, width, height-_nonWebViewHeight)];
+                         }
                          // doesn't matter if these weren't added
                          [_screenShotImageViewTop removeFromSuperview];
                          [_screenShotImageViewBottom removeFromSuperview];
