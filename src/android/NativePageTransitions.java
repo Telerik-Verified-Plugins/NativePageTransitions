@@ -149,6 +149,15 @@ public class NativePageTransitions extends CordovaPlugin {
             fixedImageViewTop.setImageBitmap(Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), cropHeight));
             final FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP);
             layout.addView(fixedImageViewTop, lp);
+            if ("down".equals(direction)) {
+              // in case we slide down, strip off the fixedPixelsTop from the top of the screenshot
+              bitmap = Bitmap.createBitmap(bitmap, 0, cropHeight, bitmap.getWidth(), bitmap.getHeight()-cropHeight);
+              imageView.setScaleType(ImageView.ScaleType.FIT_END); // affect the entire plugin but is only relevant here (1/2)
+              imageView.setImageBitmap(bitmap);
+            } else if ("up".equals(direction)) {
+              // TODO in case we slide up, strip off the fixedPixelsTop from the top of the webview
+              // .. but this seems it a bit impossible
+            }
           }
           if (fixedPixelsBottom > 0) {
             int cropHeight = (int)(fixedPixelsBottom * retinaFactor);
