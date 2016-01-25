@@ -91,7 +91,7 @@
 
   CGSize viewSize = self.viewController.view.bounds.size;
 
-  UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0);
+    UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0f);
   // Since drawViewHierarchyInRect is slower than renderInContext we should only
   // use it to overcome the bug in WKWebView
   if (self.wkWebView != nil) {
@@ -110,8 +110,8 @@
 
   // in case of a statusbar above the webview, crop off the top
   if ((_nonWebViewHeight > 0 || fixedPixelsTop > 0) && [direction isEqualToString:@"down"]) {
-    CGRect rect = CGRectMake(0.0, (_nonWebViewHeight+fixedPixelsTop)*retinaFactor, image.size.width*retinaFactor, (image.size.height-_nonWebViewHeight-fixedPixelsTop)*retinaFactor);
-    CGRect rect2 = CGRectMake(0.0, _nonWebViewHeight+fixedPixelsTop, image.size.width, image.size.height-_nonWebViewHeight-fixedPixelsTop);
+        CGRect rect = CGRectMake(0.0f, (_nonWebViewHeight+fixedPixelsTop)*retinaFactor, image.size.width*retinaFactor, (image.size.height-_nonWebViewHeight-fixedPixelsTop)*retinaFactor);
+        CGRect rect2 = CGRectMake(0.0f, _nonWebViewHeight+fixedPixelsTop, image.size.width, image.size.height-_nonWebViewHeight-fixedPixelsTop);
     CGImageRef tempImage = CGImageCreateWithImageInRect([image CGImage], rect);
     _screenShotImageView = [[UIImageView alloc]initWithFrame:rect2];
     [_screenShotImageView setImage:[UIImage imageWithCGImage:tempImage]];
@@ -122,8 +122,8 @@
 
   // Make a cropped version of the screenshot with only the top and/or bottom piece
   if (fixedPixelsTop > 0) {
-    CGRect rect = CGRectMake(0.0, _nonWebViewHeight*retinaFactor, image.size.width*retinaFactor, fixedPixelsTop*retinaFactor);
-    CGRect rect2 = CGRectMake(0.0, _nonWebViewHeight, image.size.width, fixedPixelsTop);
+        CGRect rect = CGRectMake(0.0f, _nonWebViewHeight*retinaFactor, image.size.width*retinaFactor, fixedPixelsTop*retinaFactor);
+        CGRect rect2 = CGRectMake(0.0f, _nonWebViewHeight, image.size.width, fixedPixelsTop);
     CGImageRef tempImage = CGImageCreateWithImageInRect([image CGImage], rect);
     _screenShotImageViewTop = [[UIImageView alloc]initWithFrame:rect2];
     [_screenShotImageViewTop setImage:[UIImage imageWithCGImage:tempImage]];
@@ -131,8 +131,8 @@
     [self.transitionView.superview insertSubview:_screenShotImageViewTop aboveSubview:([direction isEqualToString:@"left"] || [direction isEqualToString:@"up"] ? self.transitionView : self.screenShotImageView)];
   }
   if (fixedPixelsBottom > 0) {
-    CGRect rect = CGRectMake(0.0, (image.size.height-fixedPixelsBottom)*retinaFactor, image.size.width*retinaFactor, fixedPixelsBottom*retinaFactor);
-    CGRect rect2 = CGRectMake(0.0, image.size.height-fixedPixelsBottom, image.size.width, fixedPixelsBottom);
+        CGRect rect = CGRectMake(0.0f, (image.size.height-fixedPixelsBottom)*retinaFactor, image.size.width*retinaFactor, fixedPixelsBottom*retinaFactor);
+        CGRect rect2 = CGRectMake(0.0f, image.size.height-fixedPixelsBottom, image.size.width, fixedPixelsBottom);
     CGImageRef tempImage = CGImageCreateWithImageInRect([image CGImage], rect);
     _screenShotImageViewBottom = [[UIImageView alloc]initWithFrame:rect2];
     [_screenShotImageViewBottom setImage:[UIImage imageWithCGImage:tempImage]];
@@ -165,6 +165,9 @@
     delay = 0;
   }
   delay = delay / 1000;
+
+    NSNumber *slidePixelsNum = [args objectForKey:@"slidePixels"];
+    int slidePixels = [slidePixelsNum intValue];
 
   NSString *direction = [args objectForKey:@"direction"];
   NSNumber *slowdownfactor = [args objectForKey:@"slowdownfactor"];
@@ -216,8 +219,11 @@
                             // the screenshot was on top of the webview to hide any page changes, but now we need the webview on top again
                             [self.transitionView.superview sendSubviewToBack:_screenShotImageView];
                           }
-                         [_screenShotImageView setFrame:CGRectMake(transitionToX/screenshotSlowdownFactor, transitionToY, width, height)];
+                             if (slidePixels > 0) {
+                                 [_screenShotImageView setAlpha:0];
                        }
+                             [_screenShotImageView setFrame:CGRectMake(transitionToX/screenshotSlowdownFactor, slidePixels > 0 ? fixedPixelsTop+slidePixels : transitionToY, width, height)];
+                         }
                        completion:^(BOOL finished) {
                          [_screenShotImageView removeFromSuperview];
                          if (_originalColor != nil) {
@@ -244,7 +250,7 @@
                           delay:delay
                         options:UIViewAnimationOptionCurveEaseInOut
                      animations:^{
-                       _screenShotImageView.alpha = lowerLayerAlpha;
+                             _screenShotImageView.alpha = slidePixels > 0 ? 1.0f : lowerLayerAlpha;
                      }
                      completion:^(BOOL finished) {
                      }];
@@ -259,13 +265,20 @@
         if ([direction isEqualToString:@"left"] || [direction isEqualToString:@"right"]) {
             corr = fixedPixelsTop;
         }
-        [self.transitionView setFrame:CGRectMake(-transitionToX/webviewSlowdownFactor, webviewFromY+corr, width, height-_nonWebViewHeight)];
+        if (slidePixels > 0) {
+            [self.transitionView setAlpha:0];
+            [self.transitionView.superview bringSubviewToFront:self.transitionView];
+        }
+        [self.transitionView setFrame:CGRectMake(-transitionToX/webviewSlowdownFactor, slidePixels > 0 ? fixedPixelsTop+slidePixels : webviewFromY+corr, width, height-_nonWebViewHeight)];
 
       [UIView animateWithDuration:duration
                             delay:delay
                           options:UIViewAnimationOptionCurveEaseInOut
                        animations:^{
                              [self.transitionView setFrame:CGRectMake(0, webviewToY+fixedPixelsTop, width, height-_nonWebViewHeight)];
+                             if (slidePixels > 0) {
+                                 [self.transitionView setAlpha:1.0f];
+                         }
                          }
                          completion:^(BOOL finished) {
                              if (fixedPixelsTop > 0) {
@@ -282,13 +295,13 @@
         [_screenShotImageViewBottom removeFromSuperview];
     });
 
-  if ([slowdownfactor intValue] != 1 && ([direction isEqualToString:@"right"] || [direction isEqualToString:@"down"])) {
+    if (slidePixels <= 0 && [slowdownfactor intValue] != 1 && ([direction isEqualToString:@"right"] || [direction isEqualToString:@"down"])) {
     self.transitionView.alpha = lowerLayerAlpha;
     [UIView animateWithDuration:duration
                           delay:delay
                         options:UIViewAnimationOptionCurveEaseInOut
                      animations:^{
-                       self.transitionView.alpha = 1.0;
+                             self.transitionView.alpha = 1.0f;
                      }
                      completion:^(BOOL finished) {
                      }];
@@ -302,7 +315,7 @@
   // overlay the webview with a screenshot to prevent the user from seeing changes in the webview before the flip kicks in
   CGSize viewSize = self.viewController.view.bounds.size;
 
-  UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0);
+    UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0f);
   [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
 
   // Read the UIImage object
@@ -337,7 +350,7 @@
     NSScanner *scanner = [NSScanner scannerWithString:hexString];
     [scanner setScanLocation:1]; // bypass '#' character
     [scanner scanHexInt:&rgbValue];
-    return [UIColor colorWithRed:((rgbValue & 0xFF0000) >> 16)/255.0 green:((rgbValue & 0xFF00) >> 8)/255.0 blue:(rgbValue & 0xFF)/255.0 alpha:1.0];
+    return [UIColor colorWithRed:((rgbValue & 0xFF0000) >> 16)/255.0 green:((rgbValue & 0xFF00) >> 8)/255.0 blue:(rgbValue & 0xFF)/255.0 alpha:1.0f];
 }
 
 - (void) performFlipTransition {
@@ -436,7 +449,7 @@
   }
 
   CGSize viewSize = self.viewController.view.bounds.size;
-  UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0);
+    UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0f);
   [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
 
   // Read the UIImage object
@@ -571,7 +584,7 @@
   // overlay the webview with a screenshot to prevent the user from seeing changes in the webview before the fade kicks in
   CGSize viewSize = self.viewController.view.bounds.size;
 
-  UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0);
+    UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0f);
   [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
 
   // Read the UIImage object
@@ -641,7 +654,7 @@
   // overlay the webview with a screenshot to prevent the user from seeing changes in the webview before the flip kicks in
   CGSize viewSize = self.viewController.view.bounds.size;
 
-  UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0);
+    UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0f);
   [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
 
   // Read the UIImage object
