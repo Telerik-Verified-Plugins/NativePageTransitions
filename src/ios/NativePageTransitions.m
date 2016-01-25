@@ -271,18 +271,16 @@
                              if (fixedPixelsTop > 0) {
                                [self.transitionView setFrame:CGRectMake(0, webviewToY, width, height-_nonWebViewHeight)];
                                [self.transitionView setBounds:CGRectMake(0, 0, width, height-_nonWebViewHeight)];
-                         }
-                         // doesn't matter if these weren't added
-                         [_screenShotImageViewTop removeFromSuperview];
-                         [_screenShotImageViewBottom removeFromSuperview];
+                             }
                        }];
-    } else {
-      dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (delay+duration) * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-          // doesn't matter if these weren't added
-          [_screenShotImageViewTop removeFromSuperview];
-          [_screenShotImageViewBottom removeFromSuperview];
-      });
     }
+
+    // let's make sure these are removed (#110 indicated they won't always disappear after animation finished)
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (delay+duration) * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+        // doesn't matter if these weren't added
+        [_screenShotImageViewTop removeFromSuperview];
+        [_screenShotImageViewBottom removeFromSuperview];
+    });
 
   if ([slowdownfactor intValue] != 1 && ([direction isEqualToString:@"right"] || [direction isEqualToString:@"down"])) {
     self.transitionView.alpha = lowerLayerAlpha;
