@@ -38,6 +38,7 @@ public class NativePageTransitions extends CordovaPlugin {
   private String direction;
   private String backgroundColor;
   private int slowdownfactor;
+  private int slidePixels;
   private int fixedPixelsTop;
   private int fixedPixelsBottom;
   private CallbackContext _callbackContext;
@@ -132,6 +133,7 @@ public class NativePageTransitions extends CordovaPlugin {
       direction = json.getString("direction");
       delay = json.getLong("androiddelay");
       slowdownfactor = json.getInt("slowdownfactor");
+      slidePixels = json.optInt("slidePixels");
       fixedPixelsTop = json.getInt("fixedPixelsTop");
       fixedPixelsBottom = json.getInt("fixedPixelsBottom");
 
@@ -152,11 +154,11 @@ public class NativePageTransitions extends CordovaPlugin {
             if ("down".equals(direction)) {
               // in case we slide down, strip off the fixedPixelsTop from the top of the screenshot
               bitmap = Bitmap.createBitmap(bitmap, 0, cropHeight, bitmap.getWidth(), bitmap.getHeight()-cropHeight);
-              imageView.setScaleType(ImageView.ScaleType.FIT_END); // affect the entire plugin but is only relevant here (1/2)
+              imageView.setScaleType(ImageView.ScaleType.FIT_END); // affects the entire plugin but is only relevant here
               imageView.setImageBitmap(bitmap);
             } else if ("up".equals(direction)) {
               // TODO in case we slide up, strip off the fixedPixelsTop from the top of the webview
-              // .. but this seems it a bit impossible
+              // TODO .. but this seems it a bit impossible.. (see my email of jan 24 2016)
             }
           }
           if (fixedPixelsBottom > 0) {
@@ -202,15 +204,15 @@ public class NativePageTransitions extends CordovaPlugin {
             getView().setDrawingCacheEnabled(true);
             bitmap = Bitmap.createBitmap(getView().getDrawingCache(), "left".equals(drawerOrigin) ? 0 : drawerNonOverlappingSpace, 0, getView().getWidth()- drawerNonOverlappingSpace, getView().getHeight());
             if ("left".equals(drawerOrigin)) {
-              if (Build.VERSION.SDK_INT >= 11) {
+              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
                 imageView2.setX(-drawerNonOverlappingSpace / 2);
               }
             } else {
-              if (Build.VERSION.SDK_INT >= 11) {
+              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
                 imageView2.setX(drawerNonOverlappingSpace / 2);
               }
             }
-            if (Build.VERSION.SDK_INT >= 12) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
               bitmap.setHasAlpha(false);
             }
             getView().setDrawingCacheEnabled(false);
@@ -485,45 +487,57 @@ public class NativePageTransitions extends CordovaPlugin {
                   TranslateAnimation.RELATIVE_TO_PARENT, 0f,
                   TranslateAnimation.RELATIVE_TO_PARENT, transitionToX / screenshotSlowdownFactor,
                   translateAnimationY, 0,
-                  translateAnimationY, transitionToY / screenshotSlowdownFactor);
+                  translateAnimationY, slidePixels > 0 ? slidePixels : (transitionToY / screenshotSlowdownFactor));
               imageViewAnimation1.setDuration(duration);
               imageViewAnimation.addAnimation(imageViewAnimation1);
             }
 
             if (slowdownfactor != 1 && ("left".equals(direction) || "up".equals(direction))) {
-              final Animation imageViewAnimation2 = new AlphaAnimation(1, 0.4f);
-              imageViewAnimation2.setDuration(duration);
-              imageViewAnimation.addAnimation(imageViewAnimation2);
+              if (slidePixels <= 0) {
+                final Animation imageViewAnimation2 = new AlphaAnimation(1, 0.4f);
+                imageViewAnimation2.setDuration(duration);
+                imageViewAnimation.addAnimation(imageViewAnimation2);
+              }
             }
 
             // webview animation
-            final AnimationSet webViewAnimation = new AnimationSet(true);
+            final AnimationSet webViewAnimationSet = new AnimationSet(true);
 
             if (webviewSlowdownFactor > 0) {
               final Animation webViewAnimation1 = new TranslateAnimation(
                   TranslateAnimation.RELATIVE_TO_PARENT, -transitionToX / webviewSlowdownFactor,
                   TranslateAnimation.RELATIVE_TO_PARENT, 0,
-                  TranslateAnimation.ABSOLUTE, -transitionToY / webviewSlowdownFactor,
+                  TranslateAnimation.ABSOLUTE, slidePixels > 0 ? slidePixels : (-transitionToY / webviewSlowdownFactor),
                   TranslateAnimation.ABSOLUTE, 0);
               webViewAnimation1.setDuration(duration);
-              webViewAnimation.addAnimation(webViewAnimation1);
+              webViewAnimationSet.addAnimation(webViewAnimation1);
               //webViewAnimation1.setInterpolator(new OvershootInterpolator());
             }
 
-            if (slowdownfactor != 1 && ("right".equals(direction) || "down".equals(direction))) {
+            if (slidePixels <= 0 &&
+                slowdownfactor != 1 &&
+                ("right".equals(direction) || "down".equals(direction))) {
               final Animation webViewAnimation2 = new AlphaAnimation(0.4f, 1f);
               webViewAnimation2.setDuration(duration);
-              webViewAnimation.addAnimation(webViewAnimation2);
+              webViewAnimationSet.addAnimation(webViewAnimation2);
             }
 
-            webViewAnimation.setAnimationListener(new Animation.AnimationListener() {
+            if (slidePixels > 0) {
+              if ("up".equals(direction)) {
+                webViewAnimationSet.addAnimation(AnimationFactory.fadeInAnimation(duration, getView()));
+              } else if ("down".equals(direction)) {
+                imageViewAnimation.addAnimation(AnimationFactory.fadeOutAnimation(duration, imageView));
+              }
+            }
+
+            webViewAnimationSet.setAnimationListener(new Animation.AnimationListener() {
               @Override
               public void onAnimationStart(Animation animation) {
               }
 
               @Override
               public void onAnimationEnd(Animation animation) {
-                // prevent a flash by removing the optional fixed header/footer screenshots with a little delay
+                // prevent a flash by removing the optional fixed header/footer screenshots after a little delay
                 if (fixedImageViewTop != null || fixedImageViewBottom != null) {
                   new Timer().schedule(new TimerTask() {
                     public void run() {
@@ -552,7 +566,9 @@ public class NativePageTransitions extends CordovaPlugin {
             });
 
             imageView.setAnimation(imageViewAnimation);
-            getView().setAnimation(webViewAnimation);
+            if (slidePixels <=0 || !"down".equals(direction)) {
+              getView().setAnimation(webViewAnimationSet);
+            }
             layout.startLayoutAnimation();
 
             if (BEFORE_KITKAT) {
@@ -655,6 +671,7 @@ public class NativePageTransitions extends CordovaPlugin {
 
   private void bringToFront(View view) {
     view.bringToFront();
+    view.setVisibility(View.VISIBLE);
     if (requiresRedraw) {
       view.requestLayout();
     }
@@ -672,7 +689,7 @@ public class NativePageTransitions extends CordovaPlugin {
       View view = getView();
       view.setDrawingCacheEnabled(true);
       bitmap = Bitmap.createBitmap(view.getDrawingCache());
-      if (Build.VERSION.SDK_INT >= 12) {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
         bitmap.setHasAlpha(false);
       }
       view.setDrawingCacheEnabled(false);
@@ -701,7 +718,7 @@ public class NativePageTransitions extends CordovaPlugin {
   }
 
   private void enableHardwareAcceleration() {
-    if (Build.VERSION.SDK_INT >= 11) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
       cordova.getActivity().getWindow().setFlags(
           WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
           WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
