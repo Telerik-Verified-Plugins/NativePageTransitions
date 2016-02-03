@@ -256,6 +256,11 @@
                      }];
   }
 
+    // without this on wkwebview the transition permanently cuts off the fixedPixelsTop
+    if (self.wkWebView != nil) {
+      fixedPixelsTop = 0;
+    }
+
     if (webviewSlowdownFactor > 0) {
         if (fixedPixelsTop > 0) {
             [self.transitionView setBounds:CGRectMake(0, fixedPixelsTop, width, height-_nonWebViewHeight+fixedPixelsTop)];
