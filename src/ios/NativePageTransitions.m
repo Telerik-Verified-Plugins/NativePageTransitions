@@ -590,7 +590,11 @@
   CGSize viewSize = self.viewController.view.bounds.size;
 
     UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0f);
-  [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
+    if (self.wkWebView != nil) {
+        [self.viewController.view drawViewHierarchyInRect:self.viewController.view.bounds afterScreenUpdates:NO];
+    } else {
+        [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
+    }
 
   // Read the UIImage object
   UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
