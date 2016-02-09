@@ -124,7 +124,6 @@ NativePageTransitions.prototype._validateHref = function (href, errCallback) {
   var hrf = window.location.href;
   var currentHref;
   if (hrf.indexOf('www/') == -1) {
-    console.log('Probably running inside a companion app, your app may crash if your html file is not in the root!');
     // hrf is something like file:///data/.../index.html
     currentHref = hrf.substr(hrf.lastIndexOf('/')+1);
   } else {
