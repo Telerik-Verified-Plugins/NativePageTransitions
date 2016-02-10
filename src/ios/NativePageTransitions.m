@@ -749,17 +749,23 @@
         urlParams = [href substringFromIndex:range.location+5];
       }
       NSURL *url;
+        NSURL *origUrl;
       if (self.wkWebView != nil) {
-        NSString *filePath = bareFileName;
-        NSString *replaceWith = [@"/" stringByAppendingString:bareFileName];
-        filePath = [self.wkWebView.URL.absoluteString stringByReplacingOccurrencesOfString:self.wkWebView.URL.path withString:replaceWith];
-        url = [NSURL URLWithString:filePath];
+          origUrl = self.wkWebView.URL;
       } else {
-        NSString *currentUrl = uiwebview.request.URL.absoluteString;
-        NSRange lastSlash = [currentUrl rangeOfString:@"/" options:NSBackwardsSearch];
-        NSString *path = [currentUrl substringToIndex:lastSlash.location+1];
-        url = [NSURL URLWithString:[path stringByAppendingString:bareFileName]];
+          origUrl = uiwebview.request.URL;
       }
+        if([origUrl.scheme isEqualToString:@"file"]) {
+            NSString *currentUrl = origUrl.absoluteString;
+            NSRange lastSlash = [currentUrl rangeOfString:@"/" options:NSBackwardsSearch];
+            NSString *path = [currentUrl substringToIndex:lastSlash.location+1];
+            url = [NSURL URLWithString:[path stringByAppendingString:bareFileName]];
+        } else {
+            NSString *filePath = bareFileName;
+            NSString *replaceWith = [@"/" stringByAppendingString:bareFileName];
+            filePath = [origUrl.absoluteString stringByReplacingOccurrencesOfString:origUrl.path withString:replaceWith];
+            url = [NSURL URLWithString:filePath];
+        }
 
       // re-attach the params when loading the url
       if (urlParams != nil) {
