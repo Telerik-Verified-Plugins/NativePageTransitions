@@ -9,8 +9,8 @@
 - (void) pluginInitialize {
     CGRect screenBound = [[UIScreen mainScreen] bounds];
 
-    // Set our transitioning view
-    self.transitionView = self.viewController.view;
+    // Set our transitioning view (see #114)
+    self.transitionView = self.webView;
 
     // Look to see if a WKWebView exists
     Class wkWebViewClass = NSClassFromString(@"WKWebView");
