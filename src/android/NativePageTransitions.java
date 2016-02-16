@@ -52,6 +52,7 @@ public class NativePageTransitions extends CordovaPlugin {
   // this plugin listens to page changes, so only kick in a transition when it was actually requested by the JS bridge
   private String lastCallbackID;
   private static boolean isCrosswalk;
+  private boolean isHardwareAccelerationTried = false;
 
   static {
     try {
@@ -106,6 +107,10 @@ public class NativePageTransitions extends CordovaPlugin {
   public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
     _callbackContext = callbackContext;
 
+    if (!isHardwareAccelerationTried){
+      enableAcceleration();
+    }
+    
     if ("executePendingTransition".equalsIgnoreCase(action)) {
       delay = 0;
       if ("slide".equalsIgnoreCase(_action)) {
@@ -715,6 +720,23 @@ public class NativePageTransitions extends CordovaPlugin {
       }
     }
     return null;
+  }
+
+  private void enableAcceleration(){
+    isHardwareAccelerationTried = true;
+    // Transitions are below par when this is switched off in the manifest, so enabling it here.
+    // We may need to have developers suppress this via a param in the future.
+
+    cordova.getActivity().runOnUiThread(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          enableHardwareAcceleration();
+        } catch (Exception e) {
+          LOG.e("TRANSISION","enableHardwareAcceleration Exception",e);
+        }
+      }
+    });
   }
 
   private void enableHardwareAcceleration() {
