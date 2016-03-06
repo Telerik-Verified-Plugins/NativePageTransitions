@@ -87,23 +87,9 @@
     height = temp;
   }
 
+
+  UIImage *image =[self grabScreenshot];
   screenshotRect.size.height -= _webViewPushedDownPixels == 40 ? 20 : 0;
-
-  CGSize viewSize = self.viewController.view.bounds.size;
-
-    UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0f);
-  // Since drawViewHierarchyInRect is slower than renderInContext we should only
-  // use it to overcome the bug in WKWebView
-  if (self.wkWebView != nil) {
-    [self.viewController.view drawViewHierarchyInRect:self.viewController.view.bounds afterScreenUpdates:NO];
-  } else {
-    [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
-  }
-
-  // Read the UIImage object
-  UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
-  UIGraphicsEndImageContext();
-
   _screenShotImageView = [[UIImageView alloc]initWithFrame:screenshotRect];
   [_screenShotImageView setImage:image];
   CGFloat retinaFactor = DISPLAY_SCALE;
@@ -315,18 +301,8 @@
 
 - (void) flip:(CDVInvokedUrlCommand*)command {
   _command = command;
-  NSMutableDictionary *args = [command.arguments objectAtIndex:0];
 
-  // overlay the webview with a screenshot to prevent the user from seeing changes in the webview before the flip kicks in
-  CGSize viewSize = self.viewController.view.bounds.size;
-
-    UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0f);
-  [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
-
-  // Read the UIImage object
-  UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
-  UIGraphicsEndImageContext();
-
+  UIImage *image =[self grabScreenshot];
   CGFloat width = self.viewController.view.frame.size.width;
   CGFloat height = self.viewController.view.frame.size.height;
   [_screenShotImageView setFrame:CGRectMake(0, 0, width, height)];
@@ -335,6 +311,7 @@
   [_screenShotImageView setImage:image];
   [self.transitionView.superview insertSubview:_screenShotImageView aboveSubview:self.transitionView];
 
+  NSMutableDictionary *args = [command.arguments objectAtIndex:0];
   if ([self loadHrefIfPassed:[args objectForKey:@"href"]]) {
     // pass in -1 for manual (requires you to call executePendingTransition)
     NSTimeInterval delay = [[args objectForKey:@"iosdelay"] doubleValue];
@@ -433,6 +410,9 @@
 
 - (void) drawer:(CDVInvokedUrlCommand*)command {
   _command = command;
+
+  UIImage *image =[self grabScreenshot];
+
   NSMutableDictionary *args = [command.arguments objectAtIndex:0];
   NSString *action = [args objectForKey:@"action"];
   NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
@@ -452,18 +432,6 @@
     width = height;
     height = temp;
   }
-
-  CGSize viewSize = self.viewController.view.bounds.size;
-  UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0f);
-  if (self.wkWebView != nil) {
-      [self.viewController.view drawViewHierarchyInRect:self.viewController.view.bounds afterScreenUpdates:NO];
-  } else {
-      [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
-  }
-
-  // Read the UIImage object
-  UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
-  UIGraphicsEndImageContext();
 
   [_screenShotImageView setFrame:screenshotRect];
   if ([action isEqualToString:@"open"]) {
@@ -588,21 +556,10 @@
 
 - (void) fade:(CDVInvokedUrlCommand*)command {
   _command = command;
+
+  UIImage *image =[self grabScreenshot];
+
   NSMutableDictionary *args = [command.arguments objectAtIndex:0];
-
-  // overlay the webview with a screenshot to prevent the user from seeing changes in the webview before the fade kicks in
-  CGSize viewSize = self.viewController.view.bounds.size;
-
-    UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0f);
-    if (self.wkWebView != nil) {
-        [self.viewController.view drawViewHierarchyInRect:self.viewController.view.bounds afterScreenUpdates:NO];
-    } else {
-        [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
-    }
-
-  // Read the UIImage object
-  UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
-  UIGraphicsEndImageContext();
 
   CGFloat width = self.viewController.view.frame.size.width;
   CGFloat height = self.viewController.view.frame.size.height;
@@ -658,21 +615,14 @@
 
 - (void) curl:(CDVInvokedUrlCommand*)command {
   _command = command;
+
+  UIImage *image =[self grabScreenshot];
+
   NSMutableDictionary *args = [command.arguments objectAtIndex:0];
   NSTimeInterval duration = [[args objectForKey:@"duration"] doubleValue];
 
   // duration is passed in ms, but needs to be in sec here
   duration = duration / 1000;
-
-  // overlay the webview with a screenshot to prevent the user from seeing changes in the webview before the flip kicks in
-  CGSize viewSize = self.viewController.view.bounds.size;
-
-    UIGraphicsBeginImageContextWithOptions(viewSize, YES, 0.0f);
-  [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
-
-  // Read the UIImage object
-  UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
-  UIGraphicsEndImageContext();
 
   CGFloat width = self.viewController.view.frame.size.width;
   CGFloat height = self.viewController.view.frame.size.height;
@@ -734,6 +684,22 @@
                       [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
                     }];
   });
+}
+
+- (UIImage*) grabScreenshot {
+  UIGraphicsBeginImageContextWithOptions(self.viewController.view.bounds.size, YES, 0.0f);
+
+  // Since drawViewHierarchyInRect is slower than renderInContext we should only use it to overcome the bug in WKWebView
+  if (self.wkWebView != nil) {
+    [self.viewController.view drawViewHierarchyInRect:self.viewController.view.bounds afterScreenUpdates:NO];
+  } else {
+    [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
+  }
+
+  // Read the UIImage object
+  UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
+  UIGraphicsEndImageContext();
+  return image;
 }
 
 - (BOOL) loadHrefIfPassed:(NSString*) href {
