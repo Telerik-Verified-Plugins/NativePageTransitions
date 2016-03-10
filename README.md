@@ -19,7 +19,7 @@ cordova plugin add com.telerik.plugins.nativepagetransitions
 Using PGB?
 
 ```xml
-<gap:plugin name="com.telerik.plugins.nativepagetransitions" source="npm" />
+<plugin name="com.telerik.plugins.nativepagetransitions" source="npm" />
 ```
 
 [The MIT License (MIT)](http://www.opensource.org/licenses/mit-license.html)

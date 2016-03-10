@@ -28,5 +28,6 @@
 - (void) fade:(CDVInvokedUrlCommand*)command;
 
 - (void) executePendingTransition:(CDVInvokedUrlCommand*)command;
+- (void) cancelPendingTransition:(CDVInvokedUrlCommand*)command;
 
 @end

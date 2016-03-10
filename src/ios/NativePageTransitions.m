@@ -51,6 +51,25 @@
   }
 }
 
+- (void) cancelPendingTransition:(CDVInvokedUrlCommand*)command {
+  _slideOptions = nil;
+  _flipOptions = nil;
+  _drawerOptions = nil;
+  _fadeOptions = nil;
+  _curlOptions = nil;
+
+  // hide the screenshot like you mean it
+  [_screenShotImageView removeFromSuperview];
+  if (_originalColor != nil) {
+    self.viewController.view.backgroundColor = _originalColor;
+  }
+  // doesn't matter if these weren't added, but if they were we need to remove them
+  [_screenShotImageViewTop removeFromSuperview];
+  [_screenShotImageViewBottom removeFromSuperview];
+
+  CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+  [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
 
 - (void) slide:(CDVInvokedUrlCommand*)command {
   // make sure incorrect usage doesn't leave artifacts (call setup, then slide with delay >= 0)
