@@ -26,6 +26,14 @@ import java.util.TimerTask;
 
 public class NativePageTransitions extends CordovaPlugin {
 
+  private static final String ACTION_EXECUTE_PENDING_TRANSITION = "executePendingTransition";
+  private static final String ACTION_CANCEL_PENDING_TRANSITION = "cancelPendingTransition";
+
+  private static final String ACTION_SLIDE = "slide";
+  private static final String ACTION_FADE = "fade";
+  private static final String ACTION_FLIP = "flip";
+  private static final String ACTION_DRAWER = "drawer";
+
   private ImageView imageView;
   private ImageView imageView2;
   private ImageView fixedImageViewTop;
@@ -106,17 +114,33 @@ public class NativePageTransitions extends CordovaPlugin {
   public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
     _callbackContext = callbackContext;
 
-    if ("executePendingTransition".equalsIgnoreCase(action)) {
+    if (ACTION_EXECUTE_PENDING_TRANSITION.equalsIgnoreCase(action)) {
       delay = 0;
-      if ("slide".equalsIgnoreCase(_action)) {
+      if (ACTION_SLIDE.equalsIgnoreCase(_action)) {
         doSlideTransition();
-      } else if ("fade".equalsIgnoreCase(_action)) {
+      } else if (ACTION_FADE.equalsIgnoreCase(_action)) {
         doFadeTransition();
-      } else if ("flip".equalsIgnoreCase(_action)) {
+      } else if (ACTION_FLIP.equalsIgnoreCase(_action)) {
         doFlipTransition();
-      } else if ("drawer".equalsIgnoreCase(_action)) {
+      } else if (ACTION_DRAWER.equalsIgnoreCase(_action)) {
         doDrawerTransition();
       }
+      return true;
+    } else if (ACTION_CANCEL_PENDING_TRANSITION.equalsIgnoreCase(action)) {
+      lastCallbackID = null;
+      cordova.getActivity().runOnUiThread(new Runnable() {
+        @Override
+        public void run() {
+          if (fixedImageViewTop != null) {
+            fixedImageViewTop.setImageBitmap(null);
+          }
+          if (fixedImageViewBottom != null) {
+            fixedImageViewBottom.setImageBitmap(null);
+          }
+          imageView.setImageBitmap(null);
+          _callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK));
+        }
+      });
       return true;
     }
 
@@ -128,7 +152,7 @@ public class NativePageTransitions extends CordovaPlugin {
     calledFromJS = true;
 
     // TODO move effects to separate classes, and reuse lots of code
-    if ("slide".equalsIgnoreCase(action)) {
+    if (ACTION_SLIDE.equalsIgnoreCase(action)) {
       duration = json.getLong("duration");
       direction = json.getString("direction");
       delay = json.getLong("androiddelay");
@@ -183,7 +207,7 @@ public class NativePageTransitions extends CordovaPlugin {
         }
       });
 
-    } else if ("drawer".equalsIgnoreCase(action)) {
+    } else if (ACTION_DRAWER.equalsIgnoreCase(action)) {
 
       if (drawerNonOverlappingSpace == 0) {
         drawerNonOverlappingSpace = getView().getWidth()/8;
@@ -239,7 +263,7 @@ public class NativePageTransitions extends CordovaPlugin {
         }
       });
 
-    } else if ("fade".equalsIgnoreCase(action)) {
+    } else if (ACTION_FADE.equalsIgnoreCase(action)) {
 
       duration = json.getLong("duration");
       delay = json.getLong("androiddelay");
@@ -264,7 +288,7 @@ public class NativePageTransitions extends CordovaPlugin {
         }
       });
 
-    } else if ("flip".equalsIgnoreCase(action)) {
+    } else if (ACTION_FLIP.equalsIgnoreCase(action)) {
 
       duration = json.getLong("duration");
       direction = json.getString("direction");
