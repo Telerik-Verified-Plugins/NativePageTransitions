@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
 				id="com.telerik.plugins.nativepagetransitions"
-				version="0.6.4-dev">
+				version="0.6.4">
 
 	<name>Native Page Transitions</name>
 
