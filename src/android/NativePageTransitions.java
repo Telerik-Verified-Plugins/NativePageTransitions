@@ -168,29 +168,31 @@ public class NativePageTransitions extends CordovaPlugin {
           imageView.setImageBitmap(bitmap);
           bringToFront(imageView);
 
-          // crop the screenshot if fixed pixels have been passed when sliding left or right
-          if (fixedPixelsTop > 0) {
-            int cropHeight = (int)(fixedPixelsTop * retinaFactor);
-            fixedImageViewTop = new ImageView(cordova.getActivity().getBaseContext());
-            fixedImageViewTop.setImageBitmap(Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), cropHeight));
-            final FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP);
-            layout.addView(fixedImageViewTop, lp);
-            if ("down".equals(direction)) {
-              // in case we slide down, strip off the fixedPixelsTop from the top of the screenshot
-              bitmap = Bitmap.createBitmap(bitmap, 0, cropHeight, bitmap.getWidth(), bitmap.getHeight()-cropHeight);
-              imageView.setScaleType(ImageView.ScaleType.FIT_END); // affects the entire plugin but is only relevant here
-              imageView.setImageBitmap(bitmap);
-            } else if ("up".equals(direction)) {
-              // TODO in case we slide up, strip off the fixedPixelsTop from the top of the webview
-              // TODO .. but this seems it a bit impossible.. (see my email of jan 24 2016)
+          if (bitmap != null) {
+            // crop the screenshot if fixed pixels have been passed when sliding left or right
+            if (fixedPixelsTop > 0) {
+              int cropHeight = (int)(fixedPixelsTop * retinaFactor);
+              fixedImageViewTop = new ImageView(cordova.getActivity().getBaseContext());
+              fixedImageViewTop.setImageBitmap(Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), cropHeight));
+              final FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.TOP);
+              layout.addView(fixedImageViewTop, lp);
+              if ("down".equals(direction)) {
+                // in case we slide down, strip off the fixedPixelsTop from the top of the screenshot
+                bitmap = Bitmap.createBitmap(bitmap, 0, cropHeight, bitmap.getWidth(), bitmap.getHeight()-cropHeight);
+                imageView.setScaleType(ImageView.ScaleType.FIT_END); // affects the entire plugin but is only relevant here
+                imageView.setImageBitmap(bitmap);
+              } else if ("up".equals(direction)) {
+                // TODO in case we slide up, strip off the fixedPixelsTop from the top of the webview
+                // TODO .. but this seems it a bit impossible.. (see my email of jan 24 2016)
+              }
             }
-          }
-          if (fixedPixelsBottom > 0) {
-            int cropHeight = (int)(fixedPixelsBottom * retinaFactor);
-            fixedImageViewBottom = new ImageView(cordova.getActivity().getBaseContext());
-            fixedImageViewBottom.setImageBitmap(Bitmap.createBitmap(bitmap, 0, bitmap.getHeight()-cropHeight, bitmap.getWidth(), cropHeight));
-            final FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM);
-            layout.addView(fixedImageViewBottom, lp);
+            if (fixedPixelsBottom > 0) {
+              int cropHeight = (int)(fixedPixelsBottom * retinaFactor);
+              fixedImageViewBottom = new ImageView(cordova.getActivity().getBaseContext());
+              fixedImageViewBottom.setImageBitmap(Bitmap.createBitmap(bitmap, 0, bitmap.getHeight()-cropHeight, bitmap.getWidth(), cropHeight));
+              final FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(FrameLayout.LayoutParams.WRAP_CONTENT, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM);
+              layout.addView(fixedImageViewBottom, lp);
+            }
           }
 
           if (href != null && !"null".equals(href)) {
