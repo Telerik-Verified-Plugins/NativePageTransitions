@@ -4,8 +4,10 @@
 @implementation AppDelegate (nativepagetransitions)
 
 - (void)application:(UIApplication *)application willChangeStatusBarFrame:(CGRect)newStatusBarFrame {
-  NativePageTransitions *nativeTransitions = [self.viewController getCommandInstance:@"NativePageTransitions"];
-  nativeTransitions.webViewPushedDownPixels = newStatusBarFrame.size.height;
+    if (self.viewController.webView != nil) {
+        NativePageTransitions *nativeTransitions = [self.viewController getCommandInstance:@"NativePageTransitions"];
+        nativeTransitions.webViewPushedDownPixels = newStatusBarFrame.size.height;
+    }
 }
 
 @end
