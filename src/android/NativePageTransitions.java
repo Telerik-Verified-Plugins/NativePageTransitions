@@ -595,11 +595,18 @@ public class NativePageTransitions extends CordovaPlugin {
             if (slidePixels <=0 || !"down".equals(direction)) {
               getView().setAnimation(webViewAnimationSet);
             }
+
+            if (BEFORE_KITKAT) {
+              //fixes a problem where the animation didn't start unless the user touched the screen once
+              layout.invalidate();
+            }
+
             layout.startLayoutAnimation();
 
             if (BEFORE_KITKAT) {
               // This fixes an issue observed on a Samsung Galaxy S3 /w Android 4.3 where the img is shown,
               // but the transition doesn't kick in unless the screen is touched again.
+              // note that with 'layout.invalidate();' this may be obsolete but I can't reproduce the issue anyway
               imageView.requestFocusFromTouch();
               getView().requestFocus();
             }
