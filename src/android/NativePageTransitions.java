@@ -21,6 +21,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -197,7 +199,7 @@ public class NativePageTransitions extends CordovaPlugin {
 
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
-              webView.loadUrlIntoView(webView.getUrl().substring(0, webView.getUrl().lastIndexOf('/')+1) + href, false);
+              webView.loadUrlIntoView(buildUrl(href), false);
             }
           }
 
@@ -253,7 +255,7 @@ public class NativePageTransitions extends CordovaPlugin {
 
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
-              webView.loadUrlIntoView(webView.getUrl().substring(0, webView.getUrl().lastIndexOf('/')+1) + href, false);
+              webView.loadUrlIntoView(buildUrl(href), false);
             }
           }
 
@@ -278,7 +280,7 @@ public class NativePageTransitions extends CordovaPlugin {
 
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
-              webView.loadUrlIntoView(webView.getUrl().substring(0, webView.getUrl().lastIndexOf('/')+1) + href, false);
+              webView.loadUrlIntoView(buildUrl(href), false);
             }
           }
 
@@ -307,7 +309,7 @@ public class NativePageTransitions extends CordovaPlugin {
           bringToFront(imageView);
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
-              webView.loadUrlIntoView(webView.getUrl().substring(0, webView.getUrl().lastIndexOf('/')+1) + href, false);
+              webView.loadUrlIntoView(buildUrl(href), false);
             }
           }
 
@@ -761,4 +763,24 @@ public class NativePageTransitions extends CordovaPlugin {
       }
     }
   }
+
+  private String buildUrl(String href) {
+      try {
+        URL url = new URL(webView.getUrl());
+        String basePath = url.getPath().substring(0, url.getPath().lastIndexOf('/')+1);
+
+        StringBuilder builder = new StringBuilder();
+        builder.append(url.getProtocol());
+        builder.append("://");
+        builder.append(url.getHost());
+        builder.append(basePath);
+        builder.append(href);
+
+        return builder.toString();
+      } catch (MalformedURLException e) {
+
+      }
+
+      return webView.getUrl().substring(0, webView.getUrl().lastIndexOf('/')+1) + href;
+    }
 }

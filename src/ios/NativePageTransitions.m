@@ -718,85 +718,90 @@
 }
 
 - (BOOL) loadHrefIfPassed:(NSString*) href {
-  UIWebView *uiwebview = nil;
-  if ([self.webView isKindOfClass:[UIWebView class]]) {
-    uiwebview = ((UIWebView*)self.webView);
-  }
-  if (href != nil && ![href isEqual:[NSNull null]]) {
-    if (![href hasPrefix:@"#"] && [href rangeOfString:@".html"].location != NSNotFound) {
-      // strip any params when looking for the file on the filesystem
-      NSString *bareFileName = href;
-      NSString *urlParams = nil;
+    UIWebView *uiwebview = nil;
 
-      if (![bareFileName hasSuffix:@".html"]) {
-        NSRange range = [href rangeOfString:@".html"];
-        bareFileName = [href substringToIndex:range.location+5];
-        urlParams = [href substringFromIndex:range.location+5];
-      }
-      NSURL *url;
-        NSURL *origUrl;
-      if (self.wkWebView != nil) {
-          origUrl = self.wkWebView.URL;
-      } else {
-          origUrl = uiwebview.request.URL;
-      }
-        if([origUrl.scheme isEqualToString:@"file"]) {
-            NSString *currentUrl = origUrl.absoluteString;
-            NSRange lastSlash = [currentUrl rangeOfString:@"/" options:NSBackwardsSearch];
-            NSString *path = [currentUrl substringToIndex:lastSlash.location+1];
-            url = [NSURL URLWithString:[path stringByAppendingString:bareFileName]];
-        } else {
-            NSString *filePath = bareFileName;
-            NSString *replaceWith = [@"/" stringByAppendingString:bareFileName];
-            filePath = [origUrl.absoluteString stringByReplacingOccurrencesOfString:origUrl.path withString:replaceWith];
-            url = [NSURL URLWithString:filePath];
-        }
-
-      // re-attach the params when loading the url
-      if (urlParams != nil) {
-        NSString *absoluteURLString = [url absoluteString];
-        NSString *absoluteURLWithParams = [absoluteURLString stringByAppendingString: urlParams];
-        url = [NSURL URLWithString:absoluteURLWithParams];
-      }
-
-      NSURLRequest *urlRequest = [NSURLRequest requestWithURL:url];
-
-      // Utilize WKWebView for request if it exists
-      if (self.wkWebView != nil) {
-        [self.wkWebView loadRequest: urlRequest];
-      } else {
-        [uiwebview loadRequest: urlRequest];
-      }
-    } else if (![href hasPrefix:@"#"]) {
-      CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"href must be null, a .html file or a #navigationhash"];
-      [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
-      return NO;
-    } else {
-      // it's a hash, so load the url without any possible current hash
-      NSString *url = nil;
-      if (self.wkWebView != nil) {
-        url = self.wkWebView.URL.absoluteString;
-      } else {
-        url = uiwebview.request.URL.absoluteString;
-      }
-
-      // remove the # if it's still there
-      if ([url rangeOfString:@"#"].location != NSNotFound) {
-        NSRange range = [url rangeOfString:@"#"];
-        url = [url substringToIndex:range.location];
-      }
-      // attach the hash
-      url = [url stringByAppendingString:href];
-      // and load it
-      NSURLRequest *urlRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
-
-      if (self.wkWebView != nil) {
-        [self.wkWebView loadRequest: urlRequest];
-      } else {
-        [uiwebview loadRequest: urlRequest];
-      }
+    if ([self.webView isKindOfClass:[UIWebView class]]) {
+        uiwebview = ((UIWebView*)self.webView);
     }
-  }
-  return YES;
+
+    if (href != nil && ![href isEqual:[NSNull null]]) {
+        NSURLComponents *components = [NSURLComponents componentsWithString:href];
+        NSString *hrefPath = [components path];
+        NSString *hrefFragment = [components fragment];
+        NSString *hrefQuery = [components query];
+
+        if ([hrefPath rangeOfString:@".html"].location != NSNotFound) {
+            NSString *url;
+            NSURL *origUrl;
+
+            if (self.wkWebView != nil) {
+                origUrl = self.wkWebView.URL;
+            } else {
+                origUrl = uiwebview.request.URL;
+            }
+
+            if([origUrl.scheme isEqualToString:@"file"]) {
+                NSString *currentUrl = origUrl.absoluteString;
+                NSRange lastSlash = [currentUrl rangeOfString:@"/" options:NSBackwardsSearch];
+                NSString *path = [currentUrl substringToIndex:lastSlash.location+1];
+                url = [path stringByAppendingString:hrefPath];
+            } else {
+                NSString *hostURL = [[NSURL URLWithString:@"/" relativeToURL:origUrl] absoluteString];
+                url = [hostURL stringByAppendingString:hrefPath];
+            }
+
+            // re-attach the query when loading the url
+            if (hrefQuery != nil) {
+                url = [url stringByAppendingString:[NSString stringWithFormat:@"?%@", hrefQuery]];
+            }
+
+            // re-attach the fragment
+            if (hrefFragment != nil) {
+                url = [url stringByAppendingString: [NSString stringWithFormat:@"#%@", hrefFragment]];
+            }
+
+            NSURLRequest *urlRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
+
+            // Utilize WKWebView for request if it exists
+            if (self.wkWebView != nil) {
+                [self.wkWebView loadRequest: urlRequest];
+            } else {
+                [uiwebview loadRequest: urlRequest];
+            }
+        } else if (hrefFragment == nil) {
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"href must be null, a .html file or a #navigationhash"];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
+            return NO;
+        } else {
+            // it's a hash, so load the url without any possible current hash
+            NSString *url = nil;
+
+            if (self.wkWebView != nil) {
+                url = self.wkWebView.URL.absoluteString;
+            } else {
+                url = uiwebview.request.URL.absoluteString;
+            }
+
+            // remove the # if it's still there
+            if ([url rangeOfString:@"#"].location != NSNotFound) {
+                NSRange range = [url rangeOfString:@"#"];
+                url = [url substringToIndex:range.location];
+            }
+
+            // attach the hash
+            url = [url stringByAppendingString:href];
+
+            // and load it
+            NSURLRequest *urlRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
+
+            if (self.wkWebView != nil) {
+                [self.wkWebView loadRequest: urlRequest];
+            } else {
+                [uiwebview loadRequest: urlRequest];
+            }
+        }
+    }
+
+    return YES;
 }
 @end
