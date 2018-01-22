@@ -2,7 +2,9 @@ package com.telerik.plugins.nativepagetransitions;
 
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.os.Build;
+import android.os.Handler;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.TextureView;
@@ -15,8 +17,14 @@ import android.view.animation.AnimationSet;
 import android.view.animation.TranslateAnimation;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+
 import com.telerik.plugins.nativepagetransitions.lib.AnimationFactory;
-import org.apache.cordova.*;
+
+import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaInterface;
+import org.apache.cordova.CordovaPlugin;
+import org.apache.cordova.CordovaWebView;
+import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -113,7 +121,6 @@ public class NativePageTransitions extends CordovaPlugin {
   @Override
   public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
     _callbackContext = callbackContext;
-
     if (ACTION_EXECUTE_PENDING_TRANSITION.equalsIgnoreCase(action)) {
       delay = 0;
       if (ACTION_SLIDE.equalsIgnoreCase(_action)) {
@@ -143,7 +150,6 @@ public class NativePageTransitions extends CordovaPlugin {
       });
       return true;
     }
-
     _action = action;
 
     final JSONObject json = args.getJSONObject(0);
@@ -164,6 +170,7 @@ public class NativePageTransitions extends CordovaPlugin {
       cordova.getActivity().runOnUiThread(new Runnable() {
         @Override
         public void run() {
+          imageView.setColorFilter(null);
           Bitmap bitmap = getBitmap();
           imageView.setImageBitmap(bitmap);
           bringToFront(imageView);
@@ -196,8 +203,8 @@ public class NativePageTransitions extends CordovaPlugin {
           }
 
           if (href != null && !"null".equals(href)) {
-            if (!href.startsWith("#")) {
-              webView.loadUrlIntoView(webView.getUrl().substring(0, webView.getUrl().lastIndexOf('/')+1) + href, false);
+            if (!href.startsWith("#") && href.contains(".html")) {
+              webView.loadUrlIntoView(webView.getUrl().substring(0, webView.getUrl().indexOf("FlipletDataDir/")+15) + href, false);
             }
           }
 
@@ -253,7 +260,7 @@ public class NativePageTransitions extends CordovaPlugin {
 
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
-              webView.loadUrlIntoView(webView.getUrl().substring(0, webView.getUrl().lastIndexOf('/')+1) + href, false);
+              webView.loadUrlIntoView(webView.getUrl().substring(0, webView.getUrl().indexOf("FlipletDataDir/")+15) + href, false);
             }
           }
 
@@ -273,12 +280,13 @@ public class NativePageTransitions extends CordovaPlugin {
       cordova.getActivity().runOnUiThread(new Runnable() {
         @Override
         public void run() {
+          imageView.setColorFilter(null);
           imageView.setImageBitmap(getBitmap());
           bringToFront(imageView);
 
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
-              webView.loadUrlIntoView(webView.getUrl().substring(0, webView.getUrl().lastIndexOf('/')+1) + href, false);
+              webView.loadUrlIntoView(webView.getUrl().substring(0, webView.getUrl().indexOf("FlipletDataDir/")+15) + href, false);
             }
           }
 
@@ -300,6 +308,7 @@ public class NativePageTransitions extends CordovaPlugin {
       cordova.getActivity().runOnUiThread(new Runnable() {
         @Override
         public void run() {
+          imageView.setColorFilter(null);
           if (backgroundColor != null && backgroundColor.startsWith("#")) {
             ((View)getView().getParent()).setBackgroundColor(Color.parseColor(backgroundColor));
           }
@@ -307,7 +316,7 @@ public class NativePageTransitions extends CordovaPlugin {
           bringToFront(imageView);
           if (href != null && !"null".equals(href)) {
             if (!href.startsWith("#") && href.contains(".html")) {
-              webView.loadUrlIntoView(webView.getUrl().substring(0, webView.getUrl().lastIndexOf('/')+1) + href, false);
+              webView.loadUrlIntoView(webView.getUrl().substring(0, webView.getUrl().indexOf("FlipletDataDir/")+15) + href, false);
             }
           }
 
@@ -335,7 +344,7 @@ public class NativePageTransitions extends CordovaPlugin {
         cordova.getActivity().runOnUiThread(new Runnable() {
           @Override
           public void run() {
-
+            imageView.setColorFilter(null);
             final Animation[] animations = new Animation[] {
                 AnimationFactory.fadeOutAnimation(duration, imageView),
                 AnimationFactory.fadeInAnimation(duration, getView())
@@ -377,7 +386,11 @@ public class NativePageTransitions extends CordovaPlugin {
 
             imageView.startAnimation(animations[0]);
             getView().startAnimation(animations[1]);
-
+            
+            Handler handler = new Handler();
+            final Runnable r = () -> imageView.setColorFilter(Color.BLACK, PorterDuff.Mode.SRC_ATOP);
+            handler.postDelayed(r, duration);
+            
             calledFromJS = false;
           }
         });
@@ -398,7 +411,7 @@ public class NativePageTransitions extends CordovaPlugin {
         cordova.getActivity().runOnUiThread(new Runnable() {
           @Override
           public void run() {
-
+            imageView.setColorFilter(null);
             AnimationFactory.FlipDirection flipDirection;
             if ("left".equals(direction)) {
               flipDirection = AnimationFactory.FlipDirection.RIGHT_LEFT;
@@ -452,6 +465,10 @@ public class NativePageTransitions extends CordovaPlugin {
             imageView.startAnimation(animations[0]);
             getView().startAnimation(animations[1]);
 
+            Handler handler = new Handler();
+            final Runnable r = () -> imageView.setColorFilter(Color.BLACK, PorterDuff.Mode.SRC_ATOP);
+            handler.postDelayed(r, duration);
+
             calledFromJS = false;
           }
         });
@@ -472,6 +489,7 @@ public class NativePageTransitions extends CordovaPlugin {
         cordova.getActivity().runOnUiThread(new Runnable() {
           @Override
           public void run() {
+            imageView.setColorFilter(null);
             float transitionToX = 0;
             float transitionToY = 0;
             int translateAnimationY = TranslateAnimation.RELATIVE_TO_PARENT;
@@ -590,7 +608,7 @@ public class NativePageTransitions extends CordovaPlugin {
               public void onAnimationRepeat(Animation animation) {
               }
             });
-
+            
             imageView.setAnimation(imageViewAnimation);
             if (slidePixels <=0 || !"down".equals(direction)) {
               getView().setAnimation(webViewAnimationSet);
@@ -601,6 +619,10 @@ public class NativePageTransitions extends CordovaPlugin {
               layout.invalidate();
             }
 
+            Handler handler = new Handler();
+            final Runnable r = () -> imageView.setColorFilter(Color.BLACK, PorterDuff.Mode.SRC_ATOP);
+            handler.postDelayed(r, duration);
+            
             layout.startLayoutAnimation();
 
             if (BEFORE_KITKAT) {
