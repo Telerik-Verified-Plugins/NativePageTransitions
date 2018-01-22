@@ -15,9 +15,9 @@
 
 	<keywords>Native transitions, Native page transitions, Slide, Flip, Drawer, Menu, Curl</keywords>
 
-	<repo>https://github.com/Telerik-Verified-Plugins/NativePageTransitions.git</repo>
+	<repo>https://github.com/Fliplet/NativePageTransitions.git</repo>
 
-	<issue>https://github.com/Telerik-Verified-Plugins/NativePageTransitions/issues</issue>
+	<issue>https://github.com/Fliplet/NativePageTransitions/issues</issue>
 
 	<engines>
 		<engine name="cordova" version=">=3.0.0"/>
