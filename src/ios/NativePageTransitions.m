@@ -10,17 +10,12 @@
     CGRect screenBound = [[UIScreen mainScreen] bounds];
 
     // Set our transitioning view (see #114)
-  self.transitionView = self.webView;
+    self.transitionView = self.webView;
 
     // Look to see if a WKWebView exists
-    Class wkWebViewClass = NSClassFromString(@"WKWebView");
-    if (wkWebViewClass) {
-        for (int i = 0; i < self.webView.superview.subviews.count; i++) {
-            UIView *subview = [self.webView.superview.subviews objectAtIndex:i];
-            if ([subview isKindOfClass:wkWebViewClass]) {
-                self.transitionView = self.wkWebView = (WKWebView *)subview;
-            }
-        }
+    for (int i = 0; i < self.webView.superview.subviews.count; i++) {
+        UIView *subview = [self.webView.superview.subviews objectAtIndex:i];
+        self.transitionView = self.wkWebView = (WKWebView *)subview;
     }
 
     // webview height may differ from screen height because of a statusbar
@@ -262,9 +257,7 @@
   }
 
     // without this on wkwebview the transition permanently cuts off the fixedPixelsTop
-    if (self.wkWebView != nil) {
-      fixedPixelsTop = 0;
-    }
+    fixedPixelsTop = 0;
 
     if (webviewSlowdownFactor > 0) {
         if (fixedPixelsTop > 0) {
@@ -705,11 +698,7 @@
   UIGraphicsBeginImageContextWithOptions(self.viewController.view.bounds.size, YES, 0.0f);
 
   // Since drawViewHierarchyInRect is slower than renderInContext we should only use it to overcome the bug in WKWebView
-  if (self.wkWebView != nil) {
-    [self.viewController.view drawViewHierarchyInRect:self.viewController.view.bounds afterScreenUpdates:NO];
-  } else {
-    [self.viewController.view.layer renderInContext:UIGraphicsGetCurrentContext()];
-  }
+  [self.viewController.view drawViewHierarchyInRect:self.viewController.view.bounds afterScreenUpdates:NO];
 
   // Read the UIImage object
   UIImage *image = UIGraphicsGetImageFromCurrentImageContext();
@@ -718,10 +707,6 @@
 }
 
 - (BOOL) loadHrefIfPassed:(NSString*) href {
-  UIWebView *uiwebview = nil;
-  if ([self.webView isKindOfClass:[UIWebView class]]) {
-    uiwebview = ((UIWebView*)self.webView);
-  }
   if (href != nil && ![href isEqual:[NSNull null]]) {
     if (![href hasPrefix:@"#"]) {
       // strip any params when looking for the file on the filesystem
@@ -734,23 +719,19 @@
         urlParams = [href substringFromIndex:range.location+5];
       }
       NSURL *url;
-        NSURL *origUrl;
-      if (self.wkWebView != nil) {
-          origUrl = self.wkWebView.URL;
+      NSURL *origUrl;
+      origUrl = self.wkWebView.URL;
+      if([origUrl.scheme isEqualToString:@"file"]) {
+          NSString *currentUrl = origUrl.absoluteString;
+          NSRange lastSlash = [currentUrl rangeOfString:@"/" options:NSBackwardsSearch];
+          NSString *path = [currentUrl substringToIndex:lastSlash.location+1];
+          url = [NSURL URLWithString:[path stringByAppendingString:bareFileName]];
       } else {
-          origUrl = uiwebview.request.URL;
+          NSString *filePath = bareFileName;
+          NSString *replaceWith = [@"/" stringByAppendingString:bareFileName];
+          filePath = [origUrl.absoluteString stringByReplacingOccurrencesOfString:origUrl.path withString:replaceWith];
+          url = [NSURL URLWithString:filePath];
       }
-        if([origUrl.scheme isEqualToString:@"file"]) {
-            NSString *currentUrl = origUrl.absoluteString;
-            NSRange lastSlash = [currentUrl rangeOfString:@"/" options:NSBackwardsSearch];
-            NSString *path = [currentUrl substringToIndex:lastSlash.location+1];
-            url = [NSURL URLWithString:[path stringByAppendingString:bareFileName]];
-        } else {
-            NSString *filePath = bareFileName;
-            NSString *replaceWith = [@"/" stringByAppendingString:bareFileName];
-            filePath = [origUrl.absoluteString stringByReplacingOccurrencesOfString:origUrl.path withString:replaceWith];
-            url = [NSURL URLWithString:filePath];
-        }
 
       // re-attach the params when loading the url
       if (urlParams != nil) {
@@ -761,12 +742,7 @@
 
       NSURLRequest *urlRequest = [NSURLRequest requestWithURL:url];
 
-      // Utilize WKWebView for request if it exists
-      if (self.wkWebView != nil) {
-        [self.wkWebView loadRequest: urlRequest];
-      } else {
-        [uiwebview loadRequest: urlRequest];
-      }
+      [self.wkWebView loadRequest: urlRequest];
     } else if (![href hasPrefix:@"#"]) {
       CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"href must be null, a .html file or a #navigationhash"];
       [self.commandDelegate sendPluginResult:pluginResult callbackId:_command.callbackId];
@@ -774,11 +750,7 @@
     } else {
       // it's a hash, so load the url without any possible current hash
       NSString *url = nil;
-      if (self.wkWebView != nil) {
-        url = self.wkWebView.URL.absoluteString;
-      } else {
-        url = uiwebview.request.URL.absoluteString;
-      }
+      url = self.wkWebView.URL.absoluteString;
 
       // remove the # if it's still there
       if ([url rangeOfString:@"#"].location != NSNotFound) {
@@ -790,11 +762,7 @@
       // and load it
       NSURLRequest *urlRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:url]];
 
-      if (self.wkWebView != nil) {
-        [self.wkWebView loadRequest: urlRequest];
-      } else {
-        [uiwebview loadRequest: urlRequest];
-      }
+      [self.wkWebView loadRequest: urlRequest];
     }
   }
   return YES;
