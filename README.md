@@ -1,25 +1,22 @@
-## Native Page Transitions Cordova / PhoneGap Plugin
-by [Telerik](http://www.telerik.com)
+# Native Page Transitions Cordova / PhoneGap Plugin
+Original (and now unmaintained) version by by [Telerik](https://github.com/Telerik-Verified-Plugins/NativePageTransitions)
 
+## Fixes since Telerik version
 
-<table width="100%">
-    <tr>
-        <td width="100"><a href="http://plugins.telerik.com/plugin/native-page-transitions"><img src="http://www.x-services.nl/github-images/telerik-verified-plugins-marketplace.png" width="97px" height="71px" alt="Marketplace logo"/></a></td>
-        <td>For a quick demo app and easy code samples, check out the plugin page at the Verified Plugins Marketplace: http://plugins.telerik.com/plugin/native-page-transitions</td>
-    </tr>
-</table>
+* ITMS-90809: UIWebView API Deprecation
 
+## Installation
 
 Using the Cordova CLI?
 
 ```
-cordova plugin add com.telerik.plugins.nativepagetransitions
+cordova plugin add cordova-plugin-nativepagetransitions
 ```
 
 Using PGB?
 
 ```xml
-<plugin name="com.telerik.plugins.nativepagetransitions" source="npm" />
+<plugin name="cordova-plugin-nativepagetransitions" source="npm" />
 ```
 
 [The MIT License (MIT)](http://www.opensource.org/licenses/mit-license.html)
