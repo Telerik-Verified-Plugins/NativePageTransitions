@@ -1,6 +1,6 @@
 {
   "version": "0.6.6",
-  "name": "cordova-plugin-nativepagetranslations",
+  "name": "cordova-plugin-nativepagetransitions",
   "cordova_name": "Native Page Transitions",
   "description": "Slide out the current page to reveal the next one. By a native transitions.",
   "license": "MIT",
