@@ -1,7 +1,10 @@
 # Native Page Transitions Cordova / PhoneGap Plugin
-Original (and now unmaintained) version by by [Telerik](https://github.com/Telerik-Verified-Plugins/NativePageTransitions)
 
-## Fixes since Telerik version
+## Aknowledgments
+
+This is a fork of now unmaintained plugin by [Telerik](https://github.com/Telerik-Verified-Plugins/NativePageTransitions)
+
+## Fixes since Telerik last version (0.6.5)
 
 * ITMS-90809: UIWebView API Deprecation
 
