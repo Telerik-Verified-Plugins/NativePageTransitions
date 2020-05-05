@@ -1,5 +1,5 @@
 # Native Page Transitions Cordova / PhoneGap Plugin
-Original (and now unmaintained) version by by [Telerik](https://github.com/Telerik-Verified-Plugins/NativePageTransitions)
+Original (and now unmaintained) version by [Telerik](https://github.com/Telerik-Verified-Plugins/NativePageTransitions)
 
 ## Fixes since Telerik version
 
