@@ -1,12 +1,11 @@
 {
-  "version": "0.6.5",
-  "name": "com.telerik.plugins.nativepagetransitions",
+  "version": "0.6.6",
+  "name": "cordova-plugin-nativepagetranslations",
   "cordova_name": "Native Page Transitions",
   "description": "Slide out the current page to reveal the next one. By a native transitions.",
   "license": "MIT",
-  "author": "Telerik / Eddy Verbruggen <eddyverbruggen@gmail.com> (https://github.com/EddyVerbruggen)",
-  "repo": "https://github.com/Telerik-Verified-Plugins/WKWebView.git",
-  "issue": "https://github.com/Telerik-Verified-Plugins/WKWebView/issues",
+  "author": "Original version by Telerik / Eddy Verbruggen <eddyverbruggen@gmail.com> (https://github.com/EddyVerbruggen)",
+  "repo": "https://github.com/tlacroix/NativePageTransitions.git",
   "keywords": [
     "Native transitions",
     "Native page transitions",
@@ -17,15 +16,11 @@
     "Curl",
     "ecosystem:cordova",
     "cordova-android",
-    "cordova-ios",
-    "cordova-wp8",
-    "cordova-windows"
+    "cordova-ios"
   ],
   "platforms": [
     "ios",
-    "android",
-    "wp8",
-    "windows"
+    "android"
   ],
   "engines": [
     {

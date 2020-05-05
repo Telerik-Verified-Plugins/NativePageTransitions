@@ -718,9 +718,9 @@
 }
 
 - (BOOL) loadHrefIfPassed:(NSString*) href {
-  UIWebView *uiwebview = nil;
-  if ([self.webView isKindOfClass:[UIWebView class]]) {
-    uiwebview = ((UIWebView*)self.webView);
+  WKWebView *uiwebview = nil;
+  if ([self.webView isKindOfClass:[WKWebView class]]) {
+    uiwebview = ((WKWebView*)self.webView);
   }
   if (href != nil && ![href isEqual:[NSNull null]]) {
     if (![href hasPrefix:@"#"]) {
@@ -738,7 +738,7 @@
       if (self.wkWebView != nil) {
           origUrl = self.wkWebView.URL;
       } else {
-          origUrl = uiwebview.request.URL;
+          origUrl = uiwebview.URL;
       }
         if([origUrl.scheme isEqualToString:@"file"]) {
             NSString *currentUrl = origUrl.absoluteString;
@@ -777,7 +777,7 @@
       if (self.wkWebView != nil) {
         url = self.wkWebView.URL.absoluteString;
       } else {
-        url = uiwebview.request.URL.absoluteString;
+        url = uiwebview.URL.absoluteString;
       }
 
       // remove the # if it's still there
