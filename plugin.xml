@@ -1,28 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
-				id="com.telerik.plugins.nativepagetransitions"
-				version="0.6.5">
-
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0" id="cordova-plugin-nativepagetransitions" version="0.6.6">
 	<name>Native Page Transitions</name>
-
-	<description>
-    Slide out the current page to reveal the next one. By a native transitions.
-  </description>
-
-	<author>Eddy Verbruggen / Telerik</author>
-
+	<description>Slide out the current page to reveal the next one. By a native transitions.</description>
+	<author>
+		Eddy Verbruggen / Telerik
+		Tommy Lacroix / NuageLab
+	</author>
 	<license>MIT</license>
-
 	<keywords>Native transitions, Native page transitions, Slide, Flip, Drawer, Menu, Curl</keywords>
-
-	<repo>https://github.com/Telerik-Verified-Plugins/NativePageTransitions.git</repo>
-
-	<issue>https://github.com/Telerik-Verified-Plugins/NativePageTransitions/issues</issue>
-
+	<repo>https://github.com/tlacroix/NativePageTransitions.git</repo>
 	<engines>
 		<engine name="cordova" version=">=3.0.0"/>
 	</engines>
-
 	<js-module src="www/NativePageTransitions.js" name="NativePageTransitions">
 		<clobbers target="window.plugins.nativepagetransitions"/>
 	</js-module>
@@ -45,7 +34,7 @@
 		<config-file target="res/xml/config.xml" parent="/*">
 			<feature name="NativePageTransitions">
 				<param name="android-package" value="com.telerik.plugins.nativepagetransitions.NativePageTransitions"/>
-        <param name="onload" value="true" />
+				<param name="onload" value="true" />
 			</feature>
 		</config-file>
 		<source-file src="src/android/NativePageTransitions.java" target-dir="src/com/telerik/plugins/nativepagetransitions"/>
@@ -53,14 +42,14 @@
 		<source-file src="src/android/lib/AnimationFactory.java" target-dir="src/com/telerik/plugins/nativepagetransitions/lib"/>
 	</platform>
 
-  <!-- windows phone -->
-  <platform name="wp8">
-    <config-file target="config.xml" parent="/*">
-      <feature name="NativePageTransitions">
-        <param name="wp-package" value="NativePageTransitions"/>
-        <param name="onload" value="true" />
-      </feature>
-    </config-file>
-    <source-file src="src/winphone/NativePageTransitions.cs" />
-  </platform>
+	<!-- windows phone -->
+	<platform name="wp8">
+		<config-file target="config.xml" parent="/*">
+			<feature name="NativePageTransitions">
+				<param name="wp-package" value="NativePageTransitions"/>
+				<param name="onload" value="true" />
+			</feature>
+		</config-file>
+		<source-file src="src/winphone/NativePageTransitions.cs" />
+	</platform>
 </plugin>
